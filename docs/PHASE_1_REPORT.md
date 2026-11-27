@@ -140,6 +140,12 @@ The original 47 tests and 18 new tests passed locally on CPython 3.11.18 (65 pas
 Ruff lint, Ruff format check and `git diff --check` passed. `uv` used the workspace cache because
 the default home cache is read-only in this execution environment.
 
-The exact correction commit and new-head Windows/Linux CI evidence are recorded after publication.
+The correction commit is `a278516dcc316ca2fd29ada5ba1e684325559c89`.
+[Core CI run 45943712233](https://github.com/NickBurk/Lineament-Studio/actions/runs/45943712233)
+completed successfully on that commit. The Ubuntu and Windows CPython 3.11 jobs both completed
+wheel build and clean install, lint, formatting and contract tests, with retained
+[Ubuntu JUnit](https://github.com/NickBurk/Lineament-Studio/actions/runs/45943712233/artifacts/15173672208)
+and [Windows JUnit](https://github.com/NickBurk/Lineament-Studio/actions/runs/45943712233/artifacts/15174315157).
 The previous CI run above verifies the original Phase 1 candidate only and is not evidence for
-LS-1-01.
+LS-1-01. The documentation evidence commit after `a278516` also requires new-head CI before
+independent review.
