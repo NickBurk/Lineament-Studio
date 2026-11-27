@@ -36,3 +36,7 @@ Schema и round-trip fixtures; Reference/Copy; missing/moved/checksum drift; Uni
 ## Обязательный P1 gate перед Phase 2
 
 Ревью PR #1 выявило окно сбоя между заменой manifest и фиксацией записи в каталоге. До начала Phase 2 утвердить точную state machine и порядок долговечной записи. PREPARED intent должен переживать сбой до любой замены manifest. Утверждение включает ordering для staging, flush/commit PREPARED, замены manifest, публикации проекции и завершения/очистки записи. Для каждой границы предусмотрены fault-injection, проверка reopen и идемпотентное повторное восстановление, включая отказ во время самого recovery. Доказательство должно исключать необнаружимое расхождение manifest и каталога, а также повторную публикацию. Носитель журнала, поля, блокировка и политика восстановления остаются предметом OQ-25–28. Статус ADR остаётся Proposed. [ACR-003](../../parallel/CONTRACT_CHANGE_REQUESTS.md)
+
+## Restricted development selection
+
+ARCHITECT_SELECTED for the slice under TASK-AG01-08. Manifest 1.1 owns asset and source-version declarations. SQLite 2 owns publication, receipts and result provenance. WAL + FULL, a cooperating single writer and PREPARED-before-publication are selected for process-failure recovery on the documented local filesystem. See the [implemented state machine and evidence](../../PHASE_2_3_VERTICAL_SLICE.md#acr-003-process-failure-state-machine). Broader ADR status remains Proposed. Power-loss durability remains NOT VERIFIED.

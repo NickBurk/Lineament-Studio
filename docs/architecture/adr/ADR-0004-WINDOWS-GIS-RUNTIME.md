@@ -28,3 +28,7 @@ Runtime lock отделён от версии протокола и проект
 ## Проверка корректности
 
 Пройти Windows checks из Dependency Compatibility, включая GeoPackage/GeoTIFF round-trip, операцию reprojection, чистую Windows без Python/QGIS, coexistence, offline, provenance, SBOM и сборку Onedir. До проверки ADR сохраняет статус Proposed.
+
+## Restricted development selection
+
+ARCHITECT_SELECTED for the slice under TASK-AG01-08. Retain the Rasterio 1.4.4 / NumPy 2.4.6 candidate and verify the one-stack development profile in CPython 3.11 Windows/Linux CI. Bundle, grid-dependent transformations, QGIS coexistence and native redistribution are separate release gates. Broader ADR status remains Proposed. See [candidate evidence](../../PHASE_2_3_VERTICAL_SLICE.md#gis-candidate-and-limitations).
