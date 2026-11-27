@@ -174,3 +174,17 @@ Windows standalone GIS bundle compatibility or product acceptance.
 | NFR-OFF-001 | — | Local processing; offline candidate control transform is test evidence | src/lineament_core/infrastructure/data/project.py | tests/gis/test_runtime.py::test_offline_runtime_inventory_and_geopackage | Previous Push/PR CI JUnit | Network-disabled product E2E | IN_PROGRESS |
 | NFR-SEC-001 | — | Explicit provenance fields | src/lineament_core/infrastructure/data/provenance.py | tests/data/test_result_provenance.py::test_strict_provenance | Previous Push/PR CI JUnit | Full manifest/log secret scan | IN_PROGRESS |
 | NFR-SEC-002 | — | Reject unsupported manifests/sidecars | src/lineament_core/infrastructure/data/manifest.py; src/lineament_core/infrastructure/gis/raster.py | tests/data/test_project.py::test_unsupported_manifest_is_preserved | Previous Push/PR CI JUnit | Archive import validation | IN_PROGRESS |
+
+## Hardening contribution (product statuses unchanged)
+
+- NFR-REPRO-001: `src/lineament_core/infrastructure/data/provenance.py` historical allowlist;
+  `tests/data/test_result_provenance.py::test_real_historical_project_survives_executable_upgrade`.
+- NFR-REL-002: internal cancellation and observers in
+  `src/lineament_core/infrastructure/execution.py` and `infrastructure/data/project.py`;
+  `tests/data/test_result_provenance.py::test_cancellation_publication_boundary`,
+  `test_callback_failure_does_not_change_publication`; production Worker remains future scope.
+- NFR-REPRO-002 / PRE-001: `src/lineament_core/science/hillshade.py` offset-free derivatives;
+  `tests/science/test_offset_stability.py::test_large_offset_preserves_plane_gradient`.
+
+Exact-head CI evidence is attached to the hardening PR. These contributions do not
+promote any full normative requirement to VERIFIED or authorize new algorithms.

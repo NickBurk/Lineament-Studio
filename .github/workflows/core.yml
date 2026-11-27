@@ -41,6 +41,8 @@ jobs:
         run: uv run --locked pytest -ra --junitxml=core-junit.xml
       - name: GIS runtime and integration evidence
         run: |
+          uv run --locked pytest -ra tests/science --junitxml=science-junit.xml
+          uv run --locked pytest -ra tests/data --junitxml=data-junit.xml
           uv run --locked pytest -ra tests/gis -o junit_logging=all --junitxml=gis-junit.xml
           uv run --locked pytest -ra tests/integration --junitxml=integration-junit.xml
       - name: Preserve test evidence
@@ -49,6 +51,8 @@ jobs:
         with:
           name: core-junit-${{ matrix.os }}
           path: |
+            science-junit.xml
+            data-junit.xml
             core-junit.xml
             gis-junit.xml
             integration-junit.xml

@@ -1,5 +1,7 @@
 """Project storage with a persisted, replayable publication intent."""
 
+from ..execution import check_cancelled, copy_stream, digest_file, notify
+
 import json
 import os
 import shutil
@@ -305,6 +307,7 @@ class Project:
         relink=None,
         expected=None,
         before_intent=None,
+        cancelled=lambda: False,
     ):
         project["modified_at"] = now()
         after = encode(project)
@@ -318,10 +321,10 @@ class Project:
                 if source.stat().st_size > shutil.disk_usage(self.root).free:
                     raise OSError("Insufficient disk space for staged copy")
                 with source.open("rb") as inp, stage.open("xb") as out:
-                    shutil.copyfileobj(inp, out)
+                    copy_stream(inp, out, cancelled)
                     out.flush()
                     os.fsync(out.fileno())
-                digest = checksum(stage)
+                digest = digest_file(stage, cancelled)
                 if expected is not None and expected != digest:
                     raise ProjectError("Source changed while copying")
                 if validator:
@@ -334,6 +337,7 @@ class Project:
                     source_id=result["source_id"],
                     output_checksum=item["file"][1],
                 )
+            check_cancelled(cancelled)
             if before_intent:
                 before_intent()
             intent_started = True
@@ -343,6 +347,7 @@ class Project:
                     (operation, before, after, encode(item).decode()),
                 )
                 self.checkpoint("before_prepared_commit")
+                check_cancelled(cancelled)
             self.checkpoint("prepared_committed")
             observed = db.execute(
                 "SELECT publication_id,before,after,payload FROM pending"
@@ -532,13 +537,16 @@ class Project:
             require_self_contained(original)
             if original.stat().st_size > shutil.disk_usage(tmp).free:
                 raise OSError("Insufficient disk space for verified DEM snapshot")
-            shutil.copyfile(original, snapshot)
-            if checksum(snapshot) != asset["checksum"]:
+            with original.open("rb") as inp, snapshot.open("xb") as out:
+                copy_stream(inp, out, cancelled)
+            if digest_file(snapshot, cancelled) != asset["checksum"]:
                 raise ProjectError(
                     "Input snapshot differs from declared source content"
                 )
-            self._verify_source(asset)
-            source = raster_metadata(inspect_dem(snapshot, band=band))
+            self._verify_source(asset, cancelled=cancelled)
+            source = raster_metadata(
+                inspect_dem(snapshot, band=band, cancelled=cancelled)
+            )
             if not source["vertical_unit"]:
                 source["vertical_unit"] = "explicit metres-per-unit"
             output = Path(tmp) / "hillshade.tif"
@@ -549,11 +557,13 @@ class Project:
                 band=band,
                 tile=tile,
                 cancelled=cancelled,
-                progress=lambda fraction: progress(fraction) if fraction < 1 else None,
+                progress=lambda fraction: (
+                    notify(progress, fraction) if fraction < 1 else None
+                ),
             )
-            if checksum(snapshot) != asset["checksum"]:
+            if digest_file(snapshot, cancelled) != asset["checksum"]:
                 raise ProjectError("Input snapshot changed during processing")
-            digest = checksum(output)
+            digest = digest_file(output, cancelled)
             provenance = dict(
                 schema_version="1",
                 source_asset_id=source_id,
@@ -565,7 +575,7 @@ class Project:
                 algorithm="hillshade",
                 algorithm_version=VERSION,
                 parameters=asdict(light),
-                output=raster_metadata(inspect_dem(output)),
+                output=raster_metadata(inspect_dem(output, cancelled=cancelled)),
                 output_checksum=digest,
                 dependencies=dict(
                     rasterio=rasterio.__version__,
@@ -586,7 +596,9 @@ class Project:
                 def check_before_intent():
                     if cancelled():
                         raise Cancelled()
-                    self._verify_source(current)
+                    self._verify_source(current, cancelled=cancelled)
+                    self.checkpoint("before_commit_boundary")
+                    check_cancelled(cancelled)
 
                 key = str(uuid4())
                 self._publish(
@@ -598,6 +610,7 @@ class Project:
                     expected=digest,
                     validator=require_self_contained,
                     before_intent=check_before_intent,
+                    cancelled=cancelled,
                     result=dict(
                         id=key,
                         source_id=source_id,
@@ -605,7 +618,7 @@ class Project:
                         provenance=provenance,
                     ),
                 )
-        progress(1.0)
+        notify(progress, 1.0)
         return key
 
     @staticmethod
@@ -615,9 +628,9 @@ class Project:
                 return asset
         raise ProjectError("Unknown source asset")
 
-    def _verify_source(self, asset):
+    def _verify_source(self, asset, *, cancelled=lambda: False):
         path = self._asset_path(asset)
         require_self_contained(path)
-        if checksum(path) != asset["checksum"]:
+        if digest_file(path, cancelled) != asset["checksum"]:
             raise ProjectError("Source content changed during processing")
         require_self_contained(path)

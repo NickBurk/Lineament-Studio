@@ -381,3 +381,111 @@ def test_legacy_manifest_is_rejected_without_rewrite(tmp_path):
     with pytest.raises(ProjectError, match="Unsupported"):
         Project.open(root)
     assert manifest.read_bytes() == legacy
+
+
+@pytest.mark.parametrize(
+    "point,visible",
+    [
+        ("before_commit_boundary", False),
+        ("prepared_committed", True),
+        ("before_prepared_commit", False),
+    ],
+)
+def test_cancellation_publication_boundary(seeded, point, visible):
+    from lineament_core.science.hillshade import Cancelled
+
+    project, _, key = seeded
+    _compute(project, key)
+    original = project.snapshot()["results"][0]
+    requested = False
+
+    def request(name):
+        nonlocal requested
+        if name == point:
+            requested = True
+
+    project.checkpoint = request
+    if visible:
+        result = _compute(project, key, cancelled=lambda: requested)
+        assert result
+    else:
+        with pytest.raises(Cancelled):
+            _compute(project, key, cancelled=lambda: requested)
+    assert requested
+    state = Project.open(project.root).snapshot()
+    assert len(state["results"]) == 1 + visible
+    assert original in state["results"]
+
+
+@pytest.mark.parametrize("fail_at", [0.5, 1.0])
+def test_callback_failure_does_not_change_publication(seeded, fail_at, caplog):
+    project, _, key = seeded
+
+    def broken(fraction):
+        if fraction >= fail_at:
+            raise RuntimeError("private callback text")
+
+    result = _compute(project, key, progress=broken)
+    state = Project.open(project.root).snapshot()
+    assert len(state["results"]) == 1
+    assert state["results"][0]["id"] == result
+    assert "Progress observer failed" in caplog.text
+    assert "private callback text" not in caplog.text
+
+
+def test_real_historical_project_survives_executable_upgrade(tmp_path, monkeypatch):
+    from pathlib import Path
+    from zipfile import ZipFile
+    from lineament_core.infrastructure.data import provenance
+    from lineament_core.science import hillshade
+
+    root = tmp_path / "history"
+    with ZipFile(Path(__file__).parents[1] / "fixtures/hillshade-2.0.0.zip") as archive:
+        archive.extractall(root)
+    original = (root / "project.lspx").read_bytes()
+    with closing(sqlite3.connect(root / "project.sqlite")) as db:
+        stored = db.execute("SELECT provenance FROM results").fetchall()
+    monkeypatch.setattr(hillshade, "run", lambda *a, **k: pytest.fail("recomputation"))
+    project = Project.open(root)
+    result = project.snapshot()["results"][0]
+    assert result["provenance"]["algorithm_version"] == "2.0.0"
+    assert not provenance.executable_supported("hillshade", "2.0.0")
+    assert provenance.executable_supported("hillshade", hillshade.VERSION)
+    assert (root / "project.lspx").read_bytes() == original
+    assert checksum(root / result["path"]) == result["checksum"]
+    with closing(sqlite3.connect(root / "project.sqlite")) as db:
+        assert db.execute("SELECT provenance FROM results").fetchall() == stored
+    saved = copy.deepcopy(result)
+    assert Project.open(root).snapshot()["results"] == [saved]
+    bad = copy.deepcopy(result["provenance"])
+    bad["algorithm_version"] = "999.0.0"
+    with pytest.raises(ProjectError):
+        validate_provenance(
+            bad, source_id=result["source_id"], output_checksum=result["checksum"]
+        )
+
+
+@pytest.mark.parametrize("operation", ["copy_stream", "digest_file", "inspect_dem"])
+def test_execution_cancellation_preserves_previous_results(
+    seeded, monkeypatch, operation
+):
+    from lineament_core.infrastructure.data import project as module
+    from lineament_core.science.hillshade import Cancelled
+
+    project, _, key = seeded
+    _compute(project, key)
+    original = project.snapshot()["results"]
+    requested = False
+    real = getattr(module, operation)
+
+    def interrupt(*args, **kwargs):
+        nonlocal requested
+        requested = True
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(module, operation, interrupt)
+    with pytest.raises(Cancelled):
+        _compute(project, key, cancelled=lambda: requested)
+    assert Project.open(project.root).snapshot()["results"] == original
+    with closing(sqlite3.connect(project.root / "project.sqlite")) as db:
+        assert db.execute("SELECT count(*) FROM pending").fetchone() == (0,)
