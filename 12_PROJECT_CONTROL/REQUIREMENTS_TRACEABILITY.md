@@ -8,14 +8,16 @@ Implementation/test evidence заполняются только по факти
 |---|---|---|---:|---|
 | PROJ-001/002 | PROJECT_STORAGE | project | P0 | create/save/reopen E2E |
 | PROJ-003/004/008 | PROJECT_STORAGE | source resolver | P0 | reference/copy/missing/relink |
+| PROJ-005 | DATA_MODEL | catalog.jobs/events | P1 | журнал эксперимента и событий, сохранение связей |
 | PROJ-006/007 | METADATA_SCHEMA | project manifest | P0/P1 | `.lspx` schema/migration |
 | DATA-001/002/008/009 | DEM_PROCESSING | data.raster/preflight | P0 | raster fixture matrix |
 | DATA-003/004/006 | INPUT_OUTPUT_FORMATS | data.adapters | P1/P0 | raster/vector CRS tests |
 | DATA-005 / OSM-001 | OSM_INTEGRATION | integrations.osm | P1 | local/online provenance |
-| DATA-007 / PERF-001 | PERFORMANCE_REQUIREMENTS | data.windowed | P0 | large-raster benchmark |
+| DATA-007 | PERFORMANCE_REQUIREMENTS | data.windowed | P0 | large-raster benchmark |
 | PRE-001/002/003 | DEM_PROCESSING | preprocessing | P0/P1 | analytic surface fixtures |
 | DET-001/002 | DETECTION_ENGINE | detection.canny/log | P0 | synthetic edge/step/impulse |
 | DET-003/004/005 | DETECTION_ENGINE | detection.lsd/edlines/hough | P1 | synthetic line fixtures |
+| DET-006 | CORE_ARCHITECTURE | algorithm registry | P2 | adapter version/parameter contract |
 | POST-001/002/003 | DETECTION_ENGINE | postprocessing | P0 | geometry/merge regression |
 | ENS-001/002 | ENSEMBLE_ANALYSIS | ensemble | P0 | single/matching tests |
 | MSC-001 | MULTISCALE_ANALYSIS | multiscale | P0 | resolution/matching tests |
@@ -30,10 +32,25 @@ Implementation/test evidence заполняются только по факти
 | QGIS-001 | QGIS_PLUGIN | qgis_adapter | P1 | clean QGIS execution |
 | GEE-001 | GEE_INTEGRATION | integrations.gee | P2 | optional adapter test |
 | EXP-001 / REP-001 | INPUT_OUTPUT_FORMATS | export/report | P0/P1 | round-trip/report fixture |
-| NFR-REL/DATA/SEC | NON_FUNCTIONAL_REQUIREMENTS | system | P0 | fault/security tests |
-| NFR-PERF | PERFORMANCE_REQUIREMENTS | resources | P0 | 1k–20k benchmark |
-| NFR-REPRO | METADATA_SCHEMA | provenance | P0 | manifest/repeatability |
-| BUILD-001 | RELEASE_REQUIREMENTS | packaging | P0 | clean Windows install |
+| NFR-REL-001/002 | NON_FUNCTIONAL_REQUIREMENTS | jobs/worker | — | crash isolation, cancel/restart |
+| NFR-DATA-001/002 | PROJECT_STORAGE | storage/catalog | — | write recovery, traversal rejection |
+| NFR-PERF-001/002/003 | PERFORMANCE_REQUIREMENTS | resources/desktop | — | 1k–20k, RAM, event-loop latency |
+| NFR-REPRO-001/002 | METADATA_SCHEMA / SCIENTIFIC_VALIDATION | provenance | — | manifest completeness, repeatability |
+| NFR-COMP-001/002 | CORE_ARCHITECTURE / API_CONTRACTS | contracts/worker | — | запрет GUI imports, IPC compatibility |
+| NFR-UX-001/002 | UI_UX_SPECIFICATION | desktop | — | error states, keyboard/focus inspection |
+| NFR-OFF-001 | MASTER_TZ / NON_FUNCTIONAL_REQUIREMENTS | core/adapters | — | network-disabled E2E |
+| NFR-SEC-001/002 | NON_FUNCTIONAL_REQUIREMENTS | contracts/storage | — | secret scan, malformed manifest/archive fixtures |
+
+`—` в колонке приоритета NFR означает, что нормативный каталог не присваивает priority.
+[OQ-33](OPEN_QUESTIONS.md)
+
+`AC-REL-001` — сценарий приёмки bundle из [Acceptance Criteria](../01_REQUIREMENTS/ACCEPTANCE_CRITERIA.md)
+и [Release Requirements](../10_DELIVERY/RELEASE_REQUIREMENTS.md). Отдельный нормативный ID
+`BUILD-001` в каталоге требований отсутствует. Вопрос регистрации релизных требований — OQ-33.
+
+На базовой линии Phase 0 все приведённые требования имеют статус `NOT_STARTED` по реализации.
+Колонка «Приёмочный тест» описывает запланированную проверку. Test refs, фактические статусы и evidence
+появляются в соответствующих фазах. [Аудит критериев приёмки](../docs/REPOSITORY_BOOTSTRAP_REPORT.md)
 
 ## Правило завершения
 Ни одно требование не считается завершённым, пока не указаны implementation reference, test

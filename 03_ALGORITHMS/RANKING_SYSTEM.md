@@ -9,15 +9,15 @@
 
 ## Стартовая Geometric Score
 
-\[
+$$
 GScore=0.7P_L+0.3P_S
-\]
+$$
 
 `P_L` — процентиль длины, `P_S` — процентиль straightness. Straightness:
 
-\[
-S=\\frac{D_{endpoints}}{L_{line}}
-\]
+$$
+S=\frac{D_{endpoints}}{L_{line}}
+$$
 
 Обе величины нормируются в [0,1]. Формула — стартовый профиль, не научно установленная модель.
 
