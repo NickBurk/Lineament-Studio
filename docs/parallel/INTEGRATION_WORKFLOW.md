@@ -10,6 +10,13 @@ Each agent creates one branch per authorized task from the communicated SHA, usi
 
 ## Pull requests and checks
 
+Core CI intentionally keeps both `push` and `pull_request` triggers. A `push` run checks the
+exact commit SHA sent to a development branch. A `pull_request` run checks GitHub's temporary
+merge ref, so it exercises the proposed result against the current base branch. These checks
+protect different points in the integration flow and both results are useful. Before merging a
+PR, the required `pull_request` Core CI run for the exact proposed head must be successful; the
+matching `push` run is retained as evidence that the pushed head itself passed independently.
+
 - State the base SHA, author, owned scope, requirement and request IDs, contract versions used, changed files, exact commands, test results, CI artifact links, known risks and remaining tasks. Include scientific fixtures, benchmark evidence, migration notes or UX evidence when the change affects those areas.
 - Require Core CI on Windows and Linux CPython 3.11, isolated wheel checks, lint and tests, workstream-specific checks and contract compatibility fixtures. Include negative and recovery cases when applicable. The CI workflow retains JUnit artifacts on both platforms. Record required check status for the exact proposed head before merge.
 - Agent01 reviews path ownership, changes to dependencies, and contract compatibility. After each authorized integration, rerun the common suite and cross-workstream scenarios affected by the merge. Cross-module integration tests live under `tests/integration/` with shared fixtures maintained by Agent01. Add real adapters and test data only when their phases are authorized.

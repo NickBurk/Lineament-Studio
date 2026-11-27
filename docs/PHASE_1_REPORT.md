@@ -48,12 +48,15 @@ is required by the Core wheel. [Open questions](../12_PROJECT_CONTROL/OPEN_QUEST
 
 ## Integration base
 
-The common candidate for future parallel tasks is
-`9b61abc99e6105325a67533905ca7a790aab7a4f` on `feature/phase-01-core-contracts`.
-It contains the complete Core, the test suite and the workstream charter. Later report-only
-commits record verification. Develop future work from that exact commit after the project owner
-authorizes the common base and assignments. Integration through a history-rewriting merge mode
-requires Agent01 to record the replacement SHA before any workstreams branch.
+Common integration baseline: **NOT YET PUBLISHED**.
+
+The previous candidate `9b61abc99e6105325a67533905ca7a790aab7a4f` is historical and obsolete;
+it must not be used for downstream workstreams. PR #2 is awaiting final review and owner-authorized
+integration. Agent02, Agent03 and Agent04 must not create branches until Agent01 publishes the exact
+post-integration SHA and the project owner authorizes the assignments. After integration, Agent01
+will obtain the actual resulting GitHub SHA (including any squash/rebase result), verify that it
+contains LS-1-01 and LS-1-02, record it here and communicate that same immutable SHA to all three
+agents. A moving branch name is never a substitute for this baseline.
 [Phase 1 review](https://github.com/NickBurk/Lineament-Studio/pull/2)
 
 ## Local verification
@@ -76,8 +79,9 @@ uv run --locked pytest -ra --junitxml=core-junit.xml
 git diff --check 805c17f...HEAD
 ```
 
-The local JUnit was written to the workspace scratch directory. The final local run reported
-47 passed, 0 failed, 0 skipped. Ruff lint and format passed. A repository check confirmed
+The local JUnit was written to the workspace scratch directory. The original pre-LS-1-01 run
+reported 47 passed, 0 failed, 0 skipped. LS-1-01 added 18 regression tests, for 65 tests on
+`ec38e00`. Ruff lint and format passed. A repository check confirmed
 all 62 FR and 16 NFR traceability rows, catalogue priorities, and 61 resolvable relative
 links in the changed Markdown files before adding this evidence section.
 
@@ -149,3 +153,14 @@ and [Windows JUnit](https://github.com/NickBurk/Lineament-Studio/actions/runs/45
 The previous CI run above verifies the original Phase 1 candidate only and is not evidence for
 LS-1-01. The documentation evidence commit after `a278516` also requires new-head CI before
 independent review.
+
+## LS-1-02 string snapshot correction
+
+`freeze_json` now accepts only `type(value) is str`. A string subclass with an overridden
+`__str__` is rejected before any user-defined conversion can run, so a value cannot silently
+change from its original contents to a tampered representation. Regression coverage verifies
+rejection by `Job`, `is_json_value` and `ParameterType.STRING.accepts`, while ordinary Unicode
+strings remain accepted. The correction does not alter the JSON/JSONL wire shape or API version.
+
+The final verification run for this correction is recorded separately below after CI completes;
+run `45943809996` is evidence for LS-1-01 only and is not used as LS-1-02 evidence.

@@ -187,9 +187,11 @@ def encode_command(command: Job | Cancel) -> bytes:
 
 def _json_data(value: object) -> object:
     """Turn validated immutable parameters back into JSON-native containers."""
+    if isinstance(value, StrEnum):
+        return value.value
     if isinstance(value, Mapping):
         return {key: _json_data(item) for key, item in value.items()}
-    if isinstance(value, tuple):
+    if isinstance(value, (list, tuple)):
         return [_json_data(item) for item in value]
     return value
 
@@ -361,7 +363,7 @@ def encode_event(event: WorkerEvent) -> bytes:
         }
     elif event.kind in _EVENT_FIELDS:
         message[_EVENT_FIELDS[event.kind][0]] = event.data
-    return encode_frame(message)
+    return encode_frame(_json_data(message))
 
 
 def decode_event(frame: bytes) -> WorkerEvent:

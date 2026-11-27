@@ -10,6 +10,7 @@ from lineament_core.application import (
     CancellationToken,
     Parameter,
     ParameterType,
+    is_json_value,
 )
 from lineament_core.diagnostics import ContractError, ErrorCode
 from lineament_core.domain import (
@@ -242,10 +243,15 @@ def test_result_rejects_invalid_artifact_collection(job, artifacts):
         JobResult(job.id, job.algorithm, artifacts)
 
 
-def test_job_does_not_accept_mutable_custom_scalars(job):
-    class MutableString(str):
-        pass
+def test_job_rejects_string_subclasses_without_coercion(job):
+    class MisleadingString(str):
+        def __str__(self):
+            return "tampered"
 
-    value = MutableString("first")
-    snapshot = replace(job, parameters={"name": value})
-    assert type(snapshot.parameters["name"]) is str
+    value = MisleadingString("original")
+    with pytest.raises(ValueError):
+        replace(job, parameters={"name": value})
+    assert not is_json_value(value)
+    assert not ParameterType.STRING.accepts(value)
+    assert is_json_value("обычная строка")
+    assert ParameterType.STRING.accepts("обычная строка")

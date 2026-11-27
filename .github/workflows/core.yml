@@ -2,8 +2,11 @@ name: Core CI
 
 on:
   push:
+    # Verify the exact commit SHA that was pushed to a protected development ref.
     branches: [main, bootstrap/repository-foundation, 'feature/**']
+  # Verify the proposed merge ref, including the current base branch.
   pull_request:
+  # Permit an explicit verification when investigating a release or incident.
   workflow_dispatch:
 
 permissions:

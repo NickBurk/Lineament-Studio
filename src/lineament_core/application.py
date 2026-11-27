@@ -53,8 +53,8 @@ def freeze_json(
     """Copy nested JSON data into immutable structures without retaining input references."""
     if depth > 64:
         raise ValueError("JSON nesting exceeds 64 levels")
-    if isinstance(value, str):
-        return str(value)
+    if type(value) is str:
+        return value
     if value is None or type(value) in (int, bool):
         return value
     if type(value) is float:
