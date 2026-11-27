@@ -123,3 +123,12 @@ The wheel and contract results are recorded in the [Phase 1 report](../docs/PHAS
 Ни одно требование не считается завершённым, пока не указаны implementation reference, test
 reference, status и evidence. Статусы: `NOT_STARTED`, `IN_PROGRESS`, `IMPLEMENTED_UNVERIFIED`,
 `VERIFIED`, `BLOCKED`, `DEFERRED`. Изменение требования обновляет матрицу.
+
+## Phase 2–3 vertical slice evidence
+
+| Requirements | Evidence |
+|---|---|
+| PROJ-001–008, NFR-DATA-001/002 | `tests/data/test_project.py`: process death/reopen, unsupported manifest preservation, traversal denial, source drift and explicit relink, failed recovery, concurrent access, damaged SQLite, staging space failure |
+| DATA-001–009, NFR-COMP-001/002 | `tests/gis/test_raster.py` and `tests/gis/test_runtime.py`: actual GeoTIFF, long Unicode path, CRS/NoData and bounded reads, candidate runtime/GeoPackage raster evidence. Vector and standalone Windows bundle evidence pending. |
+| PRE-001, NFR-REPRO-001 | `tests/science/test_hillshade.py`: numeric oracles, tile equivalence, affine rotation, edge/mask, dtype and cancellation. `tests/integration/test_vertical_slice.py`: fresh-process reopen and original checksum. |
+| NFR-REL-002 and ACR-003 | Process termination tested across eight publication boundaries. Hardware power-loss evidence remains pending. |

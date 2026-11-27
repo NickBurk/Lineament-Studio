@@ -17,10 +17,21 @@ FORMAT = "org.lineament-studio.project"
 VERSION = "1.0"
 SCHEMA = "1"
 DIRECTORIES = (
-    "inputs/dem", "inputs/geology", "inputs/osm", "processing", "experiments",
-    "results", "annotations", "datasets", "reports", "cache", "logs",
+    "inputs/dem",
+    "inputs/geology",
+    "inputs/osm",
+    "processing",
+    "experiments",
+    "results",
+    "annotations",
+    "datasets",
+    "reports",
+    "cache",
+    "logs",
 )
-FIELDS = set("format_id format_version schema_version project_id application_version created_at modified_at project_crs storage_policy catalog_uri assets default_profiles".split())
+FIELDS = set(
+    "format_id format_version schema_version project_id application_version created_at modified_at project_crs storage_policy catalog_uri assets default_profiles".split()
+)
 ASSET_FIELDS = set("asset_id role storage_mode uri checksum metadata".split())
 
 
@@ -35,18 +46,27 @@ def internal(root: Path, uri: str) -> Path:
         raise ProjectError("Expected a relative internal path")
     parts = uri.split("/")
     windows = PureWindowsPath(uri)
-    if windows.drive or windows.root or any(
-        not part or part in (".", "..") or part.endswith((" ", "."))
-        or re.search(r'[<>:"\\|?*\x00-\x1f]', part)
-        or PureWindowsPath(part).is_reserved()
-        for part in parts
+    if (
+        windows.drive
+        or windows.root
+        or any(
+            not part
+            or part in (".", "..")
+            or part.endswith((" ", "."))
+            or re.search(r'[<>:"\\|?*\x00-\x1f]', part)
+            or PureWindowsPath(part).is_reserved()
+            for part in parts
+        )
     ):
         raise ProjectError("Unsafe internal path")
     path = root
     for part in parts:
         path /= part
-        if path.is_symlink() or getattr(path.lstat() if path.exists() else None,
-                                       "st_file_attributes", 0) & 0x400:
+        if (
+            path.is_symlink()
+            or getattr(path.lstat() if path.exists() else None, "st_file_attributes", 0)
+            & 0x400
+        ):
             raise ProjectError("Project paths cannot cross links or reparse points")
     if not path.resolve().is_relative_to(root.resolve()):
         raise ProjectError("Internal path escapes project")
@@ -62,8 +82,13 @@ def external(uri: str) -> Path:
 
 
 def encode(value) -> bytes:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, allow_nan=False,
-                      separators=(",", ":")).encode("utf-8")
+    return json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        allow_nan=False,
+        separators=(",", ":"),
+    ).encode("utf-8")
 
 
 def _object(pairs):
@@ -82,10 +107,17 @@ def decode(raw: bytes, root: Path) -> dict:
         value = json.loads(raw.decode("utf-8"), object_pairs_hook=_object)
         if type(value) is not dict or value.keys() != FIELDS:
             raise ProjectError("Unknown or missing manifest fields")
-        if (value["format_id"], value["format_version"], value["schema_version"]) != (FORMAT, VERSION, SCHEMA):
+        if (value["format_id"], value["format_version"], value["schema_version"]) != (
+            FORMAT,
+            VERSION,
+            SCHEMA,
+        ):
             raise ProjectError("Unsupported project format or catalog schema")
         identity(value["project_id"])
-        if type(value["application_version"]) is not str or not value["application_version"]:
+        if (
+            type(value["application_version"]) is not str
+            or not value["application_version"]
+        ):
             raise ProjectError("Missing application version")
         for key in ("created_at", "modified_at"):
             if datetime.fromisoformat(value[key]).utcoffset() is None:
@@ -94,16 +126,27 @@ def decode(raw: bytes, root: Path) -> dict:
             type(value["project_crs"]) is not str or not value["project_crs"].strip()
         ):
             raise ProjectError("Invalid project CRS declaration")
-        if value["catalog_uri"] != "project.sqlite" or value["storage_policy"] not in ("mixed", "reference", "copy"):
+        if value["catalog_uri"] != "project.sqlite" or value["storage_policy"] not in (
+            "mixed",
+            "reference",
+            "copy",
+        ):
             raise ProjectError("Invalid storage policy or catalog path")
-        if type(value["default_profiles"]) is not dict or type(value["assets"]) is not list:
+        if (
+            type(value["default_profiles"]) is not dict
+            or type(value["assets"]) is not list
+        ):
             raise ProjectError("Invalid profiles or assets")
         seen = set()
         for asset in value["assets"]:
             if type(asset) is not dict or asset.keys() != ASSET_FIELDS:
                 raise ProjectError("Unknown or missing asset fields")
             key = identity(asset["asset_id"])
-            if key in seen or asset["role"] != "primary_dem" or type(asset["metadata"]) is not dict:
+            if (
+                key in seen
+                or asset["role"] != "primary_dem"
+                or type(asset["metadata"]) is not dict
+            ):
                 raise ProjectError("Invalid or duplicate source asset")
             seen.add(key)
             mode = asset["storage_mode"]
@@ -115,9 +158,13 @@ def decode(raw: bytes, root: Path) -> dict:
                 raise ProjectError("Invalid source location")
             if value["storage_policy"] not in ("mixed", mode):
                 raise ProjectError("Source mode does not match project policy")
-            if asset["checksum"] is not None and not re.fullmatch(r"sha256:[0-9a-f]{64}", asset["checksum"]):
+            if asset["checksum"] is not None and not re.fullmatch(
+                r"sha256:[0-9a-f]{64}", asset["checksum"]
+            ):
                 raise ProjectError("Invalid source checksum")
-        encode(value)  # Reject non-finite values, invalid Unicode and invalid nested data.
+        encode(
+            value
+        )  # Reject non-finite values, invalid Unicode and invalid nested data.
         return value
     except (ValueError, TypeError, AttributeError, RecursionError) as exc:
         raise ProjectError(f"Invalid project manifest: {exc}") from exc

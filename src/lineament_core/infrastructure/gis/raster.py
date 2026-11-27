@@ -21,7 +21,9 @@ def open_tiff(path):
     return rasterio.open(Path(path), driver="GTiff", GEOREF_SOURCES="INTERNAL")
 
 
-def inspect_dem(path, *, band=1, tile=512, memory_bytes=64 * 1024**2, vertical_unit=None):
+def inspect_dem(
+    path, *, band=1, tile=512, memory_bytes=64 * 1024**2, vertical_unit=None
+):
     import numpy as np
 
     path = Path(path)
@@ -50,29 +52,52 @@ def inspect_dem(path, *, band=1, tile=512, memory_bytes=64 * 1024**2, vertical_u
             if values.size:
                 lo, hi = min(lo, float(values.min())), max(hi, float(values.max()))
         crs = src.crs
-        crs_state = "absent" if crs is None else (
-            "known" if crs.is_projected or crs.is_geographic else "unknown"
+        crs_state = (
+            "absent"
+            if crs is None
+            else ("known" if crs.is_projected or crs.is_geographic else "unknown")
         )
-        unit, factor = crs.linear_units_factor if crs and crs.is_projected else (
-            ("degree", None) if crs and crs.is_geographic else (None, None)
+        unit, factor = (
+            crs.linear_units_factor
+            if crs and crs.is_projected
+            else (("degree", None) if crs and crs.is_geographic else (None, None))
         )
         nodata = src.nodatavals[band - 1]
         if nodata is not None and not math.isfinite(nodata):
             nodata = str(nodata)
         return dict(
-            format=src.driver, width=src.width, height=src.height, bands=src.count,
-            band=band, dtype=dtype.name, crs=crs.to_wkt() if crs else None,
-            crs_state=crs_state, projected=bool(crs and crs.is_projected),
-            horizontal_unit=unit, horizontal_metres_per_unit=factor,
+            format=src.driver,
+            width=src.width,
+            height=src.height,
+            bands=src.count,
+            band=band,
+            dtype=dtype.name,
+            crs=crs.to_wkt() if crs else None,
+            crs_state=crs_state,
+            projected=bool(crs and crs.is_projected),
+            horizontal_unit=unit,
+            horizontal_metres_per_unit=factor,
             vertical_unit=vertical_unit or src.units[band - 1],
-            transform=list(transform[:6]), bounds=list(src.bounds),
-            resolution=list(src.res), rotated=bool(transform.b or transform.d),
-            nodata=nodata, mask=[flag.name for flag in src.mask_flag_enums[band - 1]],
-            nan_count=nan, inf_count=inf, valid_pixels=valid,
+            transform=list(transform[:6]),
+            bounds=list(src.bounds),
+            resolution=list(src.res),
+            rotated=bool(transform.b or transform.d),
+            nodata=nodata,
+            mask=[flag.name for flag in src.mask_flag_enums[band - 1]],
+            nan_count=nan,
+            inf_count=inf,
+            valid_pixels=valid,
             valid_percent=100 * valid / (src.width * src.height),
-            empty=valid == 0, constant=bool(valid and lo == hi),
-            minimum=lo if valid else None, maximum=hi if valid else None,
+            empty=valid == 0,
+            constant=bool(valid and lo == hi),
+            minimum=lo if valid else None,
+            maximum=hi if valid else None,
             full_array_bytes=src.width * src.height * dtype.itemsize,
-            window_working_bytes=estimate, available_disk_bytes=shutil.disk_usage(path.parent).free,
-            sidecars=[str(Path(name).name) for name in src.files if Path(name).resolve() != path.resolve()],
+            window_working_bytes=estimate,
+            available_disk_bytes=shutil.disk_usage(path.parent).free,
+            sidecars=[
+                str(Path(name).name)
+                for name in src.files
+                if Path(name).resolve() != path.resolve()
+            ],
         )
