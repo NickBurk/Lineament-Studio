@@ -1,6 +1,6 @@
 # Phase 3 Preprocessing — Scientific Validation Test Plan
 
-**Status:** test design only; no preprocessing implementation or numerical tolerance approved.  
+**Status:** test design only; no preprocessing implementation or numerical tolerance approved.
 **Specification:** `03_ALGORITHMS/DEM_PROCESSING.md`; baseline `eab8396dc358ccf888b5ade00e5a76553c1fc602`.
 
 ## Scope and acceptance discipline
@@ -49,7 +49,36 @@ scientific scale is assumed.
 | Curvature | Named curvature definition(s), derivative operator, sign convention, scaling and units must be selected from an authoritative reference. The term “curvature” alone is not a unique mathematical contract. | Paraboloid and sinusoidal surfaces provide analytical first/second derivatives for the selected definition; plane is zero for second-derivative forms. | MAE/max error, sign agreement, spatial bias, resolution convergence. Which curvature (profile/plan/general/etc.), estimator, units, regularization and tolerance: **TBD**; block pass until selected. |
 | TPI | Define center value relative to a specified neighborhood statistic and metric/geodesic neighborhood. Radius, shape, weighting and normalization must be declared. | Constant gives zero only if chosen definition preserves constants. Plane behavior depends on neighborhood symmetry and detrending; sinusoid/step probe scale response. | MAE/max against explicit discrete oracle, bias, valid-neighbor count. Neighborhood, physical radius, CRS rules, normalization, edge/NoData rule and tolerance: **TBD**. |
 | LRM | Define as residual relative to a declared terrain background/smoothing operator; specify filter, scale, boundary and mask semantics. No unique operator follows from the name alone. | Constant residual expected zero only for constant-preserving operator; plane/paraboloid and sinusoid reveal trend removal and scale response; impulse reveals support. | Residual MAE/max against the selected operator oracle, mean residual, edge artifacts, scale sensitivity. Operator/kernel/scale, detrending, output units and tolerance: **TBD**. |
+| Gaussian smoothing (P0) | Continuous Gaussian is a rotationally symmetric normal kernel; discrete implementation must declare sampled vs integrated weights and normalization. Parameters: sigma, truncation radius, pixel vs physical units, and X/Y spacing. For anisotropic pixels, physical isotropy requires spacing-aware sampling; exact rule TBD. | Independent oracle: constant surface (preservation under normalized complete support), centered impulse (discrete normalized kernel), step (independently convolved small fixture), a hand-calculated small array, NoData edge and tiled/full-array. Test multiple sigma/truncation values as parameters without asserting defaults. | Kernel sum/normalization error, impulse response against independently computed weights, MAE/max vs reference convolution, edge/mask-region error. Boundary extension, nodata renormalization vs propagation, minimum support, output dtype/rounding and tolerance **TBD**. |
+| Median filtering (P1) | Order statistic over an explicitly defined neighborhood. Specify window dimensions and physical interpretation. Even sample count median convention must be declared (lower/upper/mean or other); do not infer. | Independent sorted-list oracle: impulse/outlier, constant, step, small array with expected medians enumerated by hand, partial NoData and nodata-only window. Test odd/even window policy separately; no Gaussian oracle reused. | Exact cell agreement for integer-preserving cases where policy yields it; otherwise value error by declared dtype conversion. Edge, NoData/minimum-valid-sample rules, even-window median definition, physical-resolution mapping, halo and tolerance **TBD**. |
+| Multi-directional Hillshade (P0) | Multiple directional hillshades followed by a declared aggregation. Inputs include azimuth set, sun altitude, azimuth convention, z-factor/units and weighting/aggregation. DEC-A10/A11 are initial engineering profiles (8 azimuths at 45°, altitude 45°), not validated scientific parameters. | Flat surface; planes facing each tested direction; opposite/asymmetric orientations; rotated affine; NoData boundary; repeated/tiled runs. Independent per-direction illumination oracle precedes aggregate oracle. | Per-direction and aggregate MAE/max, directional symmetry/bias, edge/mask error, deterministic repeat and tiled/full comparison. Formula/aggregation/weights, clipping, nodata rule, azimuth convention and tolerances **TBD/Proposed** pending owner approval. |
 | Tiled processing | Same method and parameters as full-array reference; tile core excludes halo. Required halo must follow the support/radius of the selected operator. | Compare tiled and full-array outputs for all fixtures, offsets, partial tiles, tile smaller than support, nodata crossing seams and rotated affine. | Exact equality if algorithm and execution permit; otherwise MAE/max plus method-approved tolerance (currently **TBD**). Measure seams separately, output checksum/repeatability, wall time and peak RSS. Halo, overlap and parallel reduction ordering: **TBD**. |
+
+## DEM Preflight scenario matrix
+
+Preflight diagnostics below are observable test expectations, not a proposal to add mandatory API
+fields. A diagnostic may be represented through the existing approved contract; if that contract
+cannot express a case, raise a Contract Change Request before implementation.
+
+| Scenario | Expected diagnostic / test oracle | Permitted continuation |
+|---|---|---|
+| Missing, empty, corrupt, inaccessible or unsupported source | Distinguishable source/read failure with path-safe context; no crash, hang or false success. Verify original remains untouched. | Block processing until source is selected/repaired/readable; unsupported format remains blocked. |
+| Malformed/missing raster metadata | Report which metadata cannot be read; never invent dimensions, transform or CRS. | Block operations requiring missing/invalid metadata; allow only explicitly metadata-independent inspection if defined. |
+| CRS missing vs unknown | Report absent CRS distinctly from present but unrecognized/unsupported CRS. Never assign a guessed CRS. | No CRS-dependent transform or metric-distance operation; user-directed CRS assignment belongs to an explicit derivative workflow. |
+| Invalid affine transform or resolution | Report non-finite/singular transform or zero/negative/non-finite pixel resolution; preserve raw source metadata for diagnosis. | Block spatial derivative/resampling; any exception needs a method-specific documented basis. |
+| Band count/selection | Report available band count and invalid requested band; valid selected band is traceable. | Continue only with a valid explicit/defined default band. |
+| NoData value and mask | Distinguish absent nodata declaration from declared value; inspect mask validity; report inconsistent/invalid mask metadata. | Continue with explicit valid-cell semantics; nodata-only input blocks numerical processing. |
+| NaN/Inf and nodata-only | Report nonfinite counts/valid fraction; nodata-only has no valid samples. | Method-specific policy required; no silent replacement. Nodata-only blocks all numerical derivatives. |
+| Source and vertical units | Report known/unknown units and whether vertical/horizontal units are compatible for slope/illumination. | Unit-dependent algorithms blocked until explicit conversion/interpretation; non-unit-dependent metadata inspection may continue. |
+| Rotated/skewed grid | Report full affine transform and physical pixel basis; test not assuming north-up. | Continue only for algorithms whose coordinate handling supports that transform. |
+| Resource estimate | Report dimensions, dtype-based estimate and available-space/RAM estimate inputs; estimator uncertainty is visible. | Large operation may be declined/deferred under existing resource policy; no silent full-array allocation promise. |
+| Reopen source | Close and reopen same source, compare read metadata and fixture samples/checksum; detect stale/locked handle. | Continue if stable; otherwise report read/consistency failure and block dependent processing. |
+
+Requirement-to-test-plan mapping: DATA-001/002/008/009 → the Preflight matrix and synthetic fixture
+matrix; DATA-006 → metadata-preserving CRS/transform checks; DATA-007 → resource estimate and
+benchmark protocol; PRE-001 → P0 Hillshade, Multi-directional Hillshade, Gaussian smoothing, Slope;
+PRE-002/PRE-003 → P1 Curvature, TPI, LRM, Median filtering. These are plan mappings only and do
+not claim implementation or verification.
 
 ### Common spatial and missing-data rules
 

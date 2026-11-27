@@ -1,8 +1,8 @@
 # GIS Runtime Validation Gate — Phase 1 Evidence
 
-**Status:** validation plan and partial static evidence; Windows runtime **NOT VERIFIED**  
-**Baseline:** `eab8396dc358ccf888b5ade00e5a76553c1fc602`  
-**Branch:** `feature/agent03-gis-runtime-gate`  
+**Status:** validation plan and partial static evidence; Windows runtime **NOT VERIFIED**
+**Baseline:** `eab8396dc358ccf888b5ade00e5a76553c1fc602`
+**Branch:** `feature/agent03-gis-runtime-gate`
 **Scope:** autonomous Windows x64 bundle, CPython 3.11; no production runtime selection.
 
 ## Executive result
@@ -103,3 +103,31 @@ their site-packages or DLL directories.
   Proposed per task instruction; no open-question document was modified. ADR-0004 stays Proposed.
 - License statements must be generated from the eventual exact artifact/SBOM; candidate metadata is
   not a distribution license review.
+
+## CHAT02-AG03 handoff evidence (2026-11-27)
+
+- Initial checkout SHA was `b0425dd0671d1179b15e05572851cc677ebe502f`; confirmed branch
+  `feature/agent03-gis-runtime-gate` and clean status at start of this continuation.
+- Exact common base is `eab8396dc358ccf888b5ade00e5a76553c1fc602`; both referenced source documents
+  (`DEPENDENCY_COMPATIBILITY.md`, ADR-0004) exist at that baseline. PR #7 targets
+  `integration/phase-1-baseline`; Issue #5 is the existing assignment.
+- Branch was originally created from the exact clean detached baseline in the prior task run. This
+  continuation verified the existing branch and base relationship; it did not recreate the branch.
+- Skills read in the repository: requirements-engineer, software-architect,
+  data-architecture-engineer, qa-test-engineer, python-desktop-developer, code-reviewer,
+  gis-geospatial-engineer, scientific-computing-engineer,
+  geomorphology-structural-geology-expert, ui-ux-designer, release-engineer.
+- Specifications/documents read for this task: `AGENTS.md`, `MASTER_TZ.md`, `README_MASTER.md`,
+  `11_DEVELOPMENT/AI_AGENT_INSTRUCTIONS.md`, `docs/SKILL_ROUTING.md`,
+  `docs/architecture/DEPENDENCY_COMPATIBILITY.md`,
+  `docs/architecture/adr/ADR-0004-WINDOWS-GIS-RUNTIME.md`,
+  `12_PROJECT_CONTROL/OPEN_QUESTIONS.md`, `12_PROJECT_CONTROL/DECISION_REGISTER.md`,
+  `02_ARCHITECTURE/CORE_ARCHITECTURE.md`, `03_ALGORITHMS/DEM_PROCESSING.md`,
+  `04_DATA/INPUT_OUTPUT_FORMATS.md`, `12_PROJECT_CONTROL/REQUIREMENTS_TRACEABILITY.md`, and
+  `docs/parallel/AGENT_HANDOFF_TEMPLATE.md`.
+- Commands repeated/used: `git status --short --branch`, `git rev-parse HEAD`,
+  `git diff --check eab8396dc358ccf888b5ade00e5a76553c1fc602..HEAD`,
+  `python -V`, Python import/version probe for GIS modules and SQLite, document `cat`/`rg` checks.
+- Host limits: Linux x86_64, CPython 3.12.14; Rasterio, GDAL bindings, pyproj, Shapely, Pyogrio,
+  and PySide6 unavailable. Consequently no GIS runtime or algorithm execution evidence is available;
+  Windows remains **NOT VERIFIED**. Core CI, even if passing, does not change this status.
