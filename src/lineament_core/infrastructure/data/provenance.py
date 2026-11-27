@@ -81,8 +81,14 @@ def validate_provenance(record, *, source_id, output_checksum, bound_asset=None)
             )
         ):
             raise ValueError("Missing or malformed dependency versions")
-        if datetime.fromisoformat(record["created_at"]).utcoffset() is None:
-            raise ValueError("Processing timestamp requires timezone")
+        stamp = record["created_at"]
+        if type(stamp) is not str or not re.fullmatch(
+            r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|\+00:00)",
+            stamp,
+        ):
+            raise ValueError("Processing timestamp must be explicit UTC ISO-8601")
+        if datetime.fromisoformat(stamp).utcoffset().total_seconds() != 0:
+            raise ValueError("Processing timestamp must be UTC")
         source, output = record["source"], record["output"]
         for raster in (source, output):
             if (

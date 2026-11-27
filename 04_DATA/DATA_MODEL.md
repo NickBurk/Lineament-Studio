@@ -2,7 +2,9 @@
 
 ## Принципы
 - `project.lspx` — главный project manifest.
-- SQLite — system of record для каталога сущностей, связей, событий и транзакционных метаданных.
+- Для restricted Phase 2–3 profile Manifest — источник деклараций и версий источников;
+  SQLite — проекция каталога источников и источник результатов, publication intents и receipts.
+  Project Storage — единственный владелец записи (DEC-A33). Event/job tables — будущая модель.
 - GeoPackage — внутренние пространственные векторы.
 - GeoTIFF/COG — большие растры и производные.
 - JSON — manifests экспериментов и версионируемые конфигурации.
@@ -16,8 +18,9 @@ DatasetSample, MLModel, Workflow, Job, EventLog.
 ## System of record
 | Тип данных | Источник истины |
 |---|---|
-| Project identity, paths, defaults, format version | `project.lspx` |
-| Catalog, relational metadata, jobs, event log | `project.sqlite` |
+| Project identity, source declarations and versions, paths, defaults, format version | `project.lspx` |
+| Source catalog projection, results, publication intents and receipts | `project.sqlite` |
+| Future jobs and event log | Требует отдельной продуктовой схемы; в SQLite 2 не реализовано |
 | Vector geometries and spatial attributes | GeoPackage, registered in SQLite |
 | Raster sources and derived rasters | GeoTIFF/COG, registered in SQLite |
 | Experiment parameters and reproducibility manifest | Experiment JSON + SQLite reference |

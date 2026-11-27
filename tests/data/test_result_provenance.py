@@ -253,6 +253,76 @@ def test_strict_provenance(seeded, field, value):
         )
 
 
+@pytest.mark.parametrize(
+    "stamp",
+    [
+        "2026-11-27T19:00:00+00:00",
+        "2026-11-27T19:00:00Z",
+        "2026-11-27T19:00:00.123456+00:00",
+        "2026-11-27T19:00:00.123456Z",
+    ],
+)
+def test_provenance_accepts_explicit_utc(seeded, stamp):
+    project, _, key = seeded
+    _compute(project, key)
+    state = project.snapshot()
+    result = state["results"][0]
+    record = copy.deepcopy(result["provenance"])
+    record["created_at"] = stamp
+    assert validate_provenance(
+        record,
+        source_id=key,
+        output_checksum=result["checksum"],
+        bound_asset=state["assets"][0],
+    )
+
+
+@pytest.mark.parametrize(
+    "stamp",
+    [
+        "2026-11-27T19:00:00",
+        "2026-11-27T22:00:00+03:00",
+        "2026-11-27T14:00:00-05:00",
+        "2026-11-27T19:00:00-00:00",
+        "2026-02-30T19:00:00Z",
+        "2026-11-27T25:00:00Z",
+        "2026-11-27 19:00:00Z",
+        "2026-11-27T19:00Z",
+        "2026-11-27T19:00:00+0000",
+        None,
+        0,
+    ],
+)
+def test_provenance_rejects_noncanonical_or_non_utc(seeded, stamp):
+    project, _, key = seeded
+    _compute(project, key)
+    state = project.snapshot()
+    result = state["results"][0]
+    record = copy.deepcopy(result["provenance"])
+    record["created_at"] = stamp
+    with pytest.raises(ProjectError, match="Invalid result provenance"):
+        validate_provenance(
+            record,
+            source_id=key,
+            output_checksum=result["checksum"],
+            bound_asset=state["assets"][0],
+        )
+
+
+def test_generated_provenance_timestamp_is_utc(seeded):
+    project, _, key = seeded
+    _compute(project, key)
+    state = project.snapshot()
+    result = state["results"][0]
+    assert result["provenance"]["created_at"].endswith("+00:00")
+    assert validate_provenance(
+        result["provenance"],
+        source_id=key,
+        output_checksum=result["checksum"],
+        bound_asset=state["assets"][0],
+    )
+
+
 def test_invalid_publication_provenance_leaves_no_intent(seeded):
     project, _, key = seeded
     with pytest.raises(ProjectError, match="Vertical units conflict"):
