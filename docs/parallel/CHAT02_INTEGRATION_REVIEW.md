@@ -55,3 +55,64 @@ Stage B requires a separate chief-architect assignment and revised PR #4/#3 head
 ## 7. Review method and limits
 
 Read `AGENTS.md`, master specification, AI agent instructions, skill routing, handoff, ownership, workflow, contract process, API Contracts, data/storage/metadata, DEM and UI specifications, ADR-0001–0004, Decision Register, Open Questions and traceability. Read all 11 explicit `.agents/skills/*/SKILL.md` paths listed in `AGENT_HANDOFF_TEMPLATE.md`. Compared Git refs/diffs and published CHAT01 PR comments. No production tests, Windows runtime tests or fault-injection were run for this documentation review; their absence is an integration gate, not a pass.
+
+## Stage B1 snapshot — 2026-11-27
+
+This section updates the Stage A snapshot; it is not Stage B2. The review branch descends from `eab8396dc358ccf888b5ade00e5a76553c1fc602` through Stage A commit `de9884c3c6486d944fb58907a32e526d17c92065`. Remote `integration/phase-1-baseline` still resolves to `eab8396`. All three PR heads have this ancestor and target that branch. Their changes remain within each agent's owned documentation directory. ADR, OQ, Core, wire, dependencies and production modules were not changed.
+
+| Agent / PR | Current HEAD and baseline diff | B1 verdict | Evidence and remaining gate |
+|---|---|---|---|
+| Agent02 [#4](https://github.com/NickBurk/Lineament-Studio/pull/4) | `fe55037eb7c715257b571eb57bd17d4217471154`; 2 `docs/data/` files, 346 additions. Previous `262795a` is historical. | **REQUEST CHANGES / PENDING owner decision** | [Core CI](https://github.com/NickBurk/Lineament-Studio/actions/runs/45969553208) succeeded on associated head; diff check clean. LS-INT-02-01/02 and Windows durability evidence remain open. |
+| Agent03 [#7](https://github.com/NickBurk/Lineament-Studio/pull/7) | `b0425dd0671d1179b15e05572851cc677ebe502f`; 2 `docs/science/` files, 204 additions. | **REQUEST CHANGES / PENDING** | [Core CI](https://github.com/NickBurk/Lineament-Studio/actions/runs/45969506951) succeeded; Windows GIS runtime NOT VERIFIED. LS-INT-03-01–03 require response. `git diff --check` found four Markdown hard-break whitespace lines despite PR's stated pass. |
+| Agent04 [#3](https://github.com/NickBurk/Lineament-Studio/pull/3) | `904b3765c79a8206f2584701cfb27696270666e6`; unchanged, 3 `docs/desktop/` files, 278 additions. | **PENDING revised head** | [Core CI](https://github.com/NickBurk/Lineament-Studio/actions/runs/45951723900) succeeded; no GUI test evidence. Preserve CHAT01 ACCEPT comment without treating it as merge approval; five refinements and Stage A whitespace findings remain. |
+
+Published [CHAT01 PR #4 findings](https://github.com/NickBurk/Lineament-Studio/pull/4#issuecomment-7211950405) and [PR #3 findings](https://github.com/NickBurk/Lineament-Studio/pull/3#pullrequestreview-6084545255) were reviewed; PR #7 has no published review comment at this snapshot. Commit-associated CI success is evidence for Core CI only. Before Stage B2, identify both push and pull-request event runs, checked SHA/ref and jobs for each revised head. An empty commit-status array alone is not evidence of absent CI.
+
+### Focused findings and conflict updates
+
+PR #4 now distinguishes committed PREPARED from proven power durability. It compares DELETE/FULL, DELETE/EXTRA, WAL/FULL and WAL/EXTRA, requiring effective PRAGMA readback and Windows VFS/device evidence. It separates Worker `job_id`, internal `publication_id` and `result_id`, defers external idempotency keys, clarifies source declarations versus SQLite projection and derived assets, discusses SQLite corruption windows, ReplaceFileW ambiguity/same-volume digests and LockFileEx cooperation/reacquisition. FI-08 is still a planned fault case, not executed evidence. LS-INT-02-01/02 remain open pending explicit response and owner decision.
+
+PR #7 correctly separates earlier Linux archive metadata from unverified Windows runtime. DLL/PROJ DB isolation, real GeoTIFF/GPKG operations, QGIS coexistence and clean bundle are NOT VERIFIED. Scientific fixtures for slope, curvature, hillshade, TPI, LRM and tiled equivalence have TBD tolerances. LS-INT-03-01–03 remain open: Gaussian smoothing, median filtering and multi-directional hillshade need method-specific oracles, while DEM Preflight needs explicit positive/negative acceptance fixtures and agreed tolerances. This asks for a revised validation plan, not Phase 3 code.
+
+PR #3 has no revised head. Undo scope, remove-from-project wording, benchmark sample size/cold-warm-reopen RSS, CSS versus Qt pixels and Project CRS remain CHAT01 refinements. OQ-23 close-with-active-job policy stays Proposed.
+
+C01 (durable PREPARED) remains open for SQLite/Windows evidence and journal choice. C02 (retry/IDs) is narrowed by `publication_id` separation but needs owner-approved semantics. C03 (source ownership) needs a field authority table and reconciliation oracle. C04 (schema/path) needs checksum and relative Reference decisions. C05 (canvas/UX) awaits PR #3 revision and prototype. No new conflict ID is created.
+
+### Expanded compatibility matrix
+
+| Boundary | Existing contract and proposal | Requirements / consumers | Status, evidence and next gate |
+|---|---|---|---|
+| Core ↔ Storage | Core job/result IDs and new computation retry UUID; PR #4 proposes internal publication/result IDs. | NFR-REL-002, PROJ-006–008; Job Manager, Project Storage. | C02 open. Approve mapping and negative duplicate/retry cases before schema. |
+| Core ↔ Worker | Versioned JSON/JSONL, cancel, one terminal event and `commit_started`; durable publication is future Storage behavior. | NFR-COMP-001/002, NFR-REL-001/002; Worker adapter, Job Manager. | ADR-0002 Proposed; OQ-21/22/23 pending. Spike crash-after-commit and cancel/exit matching. |
+| Storage ↔ GIS | Manifest source declaration, SQLite projection and raster/vector payload; PR #4 stages GeoTIFF/GPKG. | PROJ-003/004/008, DATA-001/006/007; resolver, GIS adapter. | C01/C03/C04 open. Approve metadata/checksum, then real file reopen/fault cases. |
+| Storage ↔ Desktop | Reference/Copy, missing/relink and publication barrier; PR #3 describes UX states. | PROJ-001–008, UI-001–004; Data Workspace, Task Manager. | C03/C04/C05 open. Confirm PREPARED visibility, remove and relink semantics. |
+| GIS ↔ Desktop | Explicit CRS and windowed reads; PR #3 proposes canvas/cache thresholds. | DATA-001–009, UI-001–004; GIS adapter, canvas. | OQ-01/29 open. Runtime and canvas spikes before approved NFR. |
+| Worker ↔ Desktop | Progress/cancel JSONL and transport failure; PR #3 proposes task states. | NFR-REL-001/002, UI-004; worker client, Task Manager. | OQ-23 Proposed. Test close/cancel/commit races and truthful status. |
+
+### Decision package for project owner
+
+Each candidate is a recommendation, not an approval or status change. The owner must approve the stated choice after the named evidence gate.
+
+| OQ / ADR / requirements | Candidate versus alternative; benefit and cost | Risks, consumers, tests and exact owner decision |
+|---|---|---|
+| OQ-23 / ADR-0002 / NFR-REL-002, UI-004 | Cancel, drain and bounded wait on close versus immediate termination; former preserves terminal evidence, latter is simpler. | Worker/Desktop/Storage: race before/after `commit_started`, EOF/exit, forced-stop recovery. Approve close semantics and timeout. |
+| OQ-24 / ADR-0002 / NFR-REL-002 | New Worker UUID for computation retry, reuse internal publication ID only for recovery; external dedup key alternative needs versioned contract. | Core/Storage: same/different payload, fresh retry and no double publication. Approve ID mapping and receipt visibility. |
+| OQ-25 / ADR-0003 / PROJ-003/004 | Manifest source authority with checked SQLite projection versus SQLite-only source authority; former matches current manifest, latter simplifies DB transactions but changes schema. | Storage/GIS/Desktop: stale projection, identity conflict, migration. Approve field-level authority. |
+| OQ-26 / ADR-0003 / NFR-DATA-001/002, NFR-REL-002 | Durable intent before manifest replacement; compare WAL/FULL with DELETE/EXTRA. Sidecar alternative aids corrupt-DB recovery but adds another protocol. | Storage/Worker: FI-08, all publication boundaries, process kill and controlled power failure. Approve journal carrier/profile and supported filesystem. |
+| OQ-27 / ADR-0003 / PROJ-006–008 | Strict versioned manifest/path rules versus permissive unknown fields; strictness protects writes but can reject future files. | Storage/GIS/Desktop: checksum optionality, relative Reference, Unicode, traversal, old/new migration. Approve field/path/version grammar. |
+| OQ-28 / ADR-0004 / DATA-001/006/007 | Compare isolated wheel and single-channel GIS profiles; neither is selected yet. | GIS/Storage/Desktop/Release: DLL/data inventory, QGIS contamination, real file tests. Approve runtime only after spike. |
+| OQ-03 / ADR-0004 / NFR-COMP-001/002 | Lock Windows CPython 3.11 GIS stack after runtime checks versus archive-only pins with ABI risk. | GIS/Release: import order, drivers, grids, CRS and SBOM. Approve exact version set and Windows build. |
+| OQ-01 / UI-001, NFR performance | Measure representative canvas first versus adopting proposal p95 unmeasured; measurement delays target selection but avoids false NFR. | Desktop/GIS: cold/warm/reopen p50/p95, RAM, handles, CRS. Approve hardware and thresholds. |
+| OQ-29 / UI-004, DATA-001–009 | Windowed reads and bounded cache versus whole-raster load; former controls RAM, latter is simpler. | Desktop/GIS: 1k–20k, NoData/rotation, responsiveness and cleanup. Approve preview/cache contract. |
+
+Related gates: OQ-21/22 need framing/version/error fixtures before production Worker; OQ-12/13 need SBOM, licenses and clean supported-Windows matrix before release; OQ-30/33/34 need approved P0/P1 scope, GWT/priority/release IDs and manual-backup acceptance before affected implementation/release. All existing statuses remain unchanged.
+
+### Bounded verification spike proposals
+
+| Spike | Hypothesis, temporary scope/environment | Fixtures and actual tests; stop/go | Expected artifacts and production boundary |
+|---|---|---|---|
+| Storage Recovery | Durable PREPARED plus idempotent recovery prevents hidden mismatch. Disposable Windows local-NTFS VM and isolated harness. | Synthetic `.lspx`, SQLite, GeoTIFF/GPKG; FI-08 and every publication boundary, process kill, controlled VM power interruption, corrupt DB, busy/space failures, repeated reopen. Go only if old/new consistent state and single result are provable. | Commands, hashes, state traces, VM profile and logs; no production storage. Owner may authorize a bounded spike before final journal choice, removing the evidence/approval cycle. |
+| Windows GIS Runtime | One profile can load its own native resources and preserve geodata without QGIS. Separate clean Windows x64 CPython 3.11 candidate environments. | Tiny GeoTIFF/GPKG, CRS/grid controls, Unicode/long paths, import order, hostile PATH, DLL/proj.db inventory and QGIS-present control. Go if resources remain profile-local and round-trips match. | Package hashes, DLL paths, driver list, outputs, SBOM; no shared dependency lock or production selection. |
+| Map Canvas | Windowed viewport with bounded cache avoids full DEM load and UI stalls. Disposable prototype on named Windows hardware. | 1k–20k rasters, 1/5 GPKG layers, NoData/rotation, cold/warm/reopen repeats, p50/p95, UI/Worker RSS and handles. Stop on wrong CRS, unbounded resources or frozen UI. | Dataset hashes, timings, traces and prototype notes; no product canvas or accepted NFR. |
+
+**STAGE B1 COMPLETE — FINAL WORKSTREAM REVISIONS PENDING.** Stage B2 will recheck exact revised heads, ownership, both CI event types and cross-workstream fixtures after separate authorization. No merge, baseline publication or Phase 2/3 implementation follows from this report.
