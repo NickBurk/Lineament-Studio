@@ -62,3 +62,7 @@ uv --no-config pip compile --no-cache --no-python-downloads \
 4. После passing checks, SBOM, проверки advisory и лицензий зафиксировать платформенный lock с хешами и источниками. Возможность обновлять security patches CPython 3.11 и нативных библиотек входит в решение о поставке. Версии Windows и QGIS LTR определяются отдельно.
 
 Главные открытые риски — ABI NumPy 2 и OpenCV/SciPy/Rasterio, разные GDAL/PROJ/GEOS/SQLite DLL, отсутствие или несовместимость `proj.db` и grid files, покрытие GPKG/GTiff drivers, Qt plugins и VC runtime. Для защиты от захвата DLL проверяются пути из установленного Bundle и поведение при изменённом `PATH`. Сборку и установку проверять в каталоге с пробелами и Unicode, под обычным пользователем и без сети. [Риски R-04/R-15](../../12_PROJECT_CONTROL/RISK_REGISTER.md) · [Release Requirements](../../10_DELIVERY/RELEASE_REQUIREMENTS.md)
+
+## TASK-AG01-08 development profile
+
+Windows/Linux CPython 3.11 candidate CI exercises locked Rasterio 1.4.4 / NumPy 2.4.6, GeoTIFF, raster and vector GeoPackage, offline coordinate transformation and native inventory. The [slice profile](../PHASE_2_3_VERTICAL_SLICE.md#gis-candidate-and-limitations) records its scope. Standalone installer, QGIS coexistence, grid-dependent transformations and redistribution are future gates. There is no dependency change in this hardening task.

@@ -70,6 +70,8 @@
 | DEC-A30 | Главный файл проекта — `project.lspx`, UTF-8 JSON manifest; `project.sqlite` — каталог | ADR-0001; schema/migration tests |
 | DEC-A31 | Skills Pack v1.0 встроен в `.agents/skills`, `AGENTS.md`, `docs/SKILL_ROUTING.md` и `docs/templates` | Проверить discovery в целевом coding agent |
 | DEC-A32 | Для межслойных/публичных архитектурных изменений требуется ADR | Проверять на PR |
+| DEC-A33 | Restricted Phase 2–3 development storage profile. Manifest owns source versions, SQLite owns results/receipts. WAL + FULL and PREPARED precede publication on local filesystems with one cooperating writer. | ARCHITECT_SELECTED. See [slice evidence](../docs/PHASE_2_3_VERTICAL_SLICE.md#task-ag01-08-development-verification). Power-loss and product storage profile remain open. |
+| DEC-A34 | Retain Rasterio 1.4.4 / NumPy 2.4.6 for the candidate development environment. | ARCHITECT_SELECTED. Windows candidate CI and standalone redistribution have separate acceptance gates. |
 
 ## OPEN / PROPOSED
 Технические вопросы, методы проверки и фазы закрытия перечислены в [Open Questions](OPEN_QUESTIONS.md).
