@@ -110,12 +110,17 @@ RESULT_VERSION = "1.0"
 class JobResult:
     job_id: UUID
     algorithm: AlgorithmRef
-    artifacts: tuple[ArtifactRef, ...] = ()
+    artifacts: tuple[ArtifactRef, ...] | list[ArtifactRef] = ()
     version: str = RESULT_VERSION
 
     def __post_init__(self) -> None:
         require_id(self.job_id)
         if self.version != RESULT_VERSION:
             raise ValueError("Unsupported result version")
+        if type(self.artifacts) not in (list, tuple):
+            raise ValueError("Expected a list or tuple of artifacts")
+        if any(not isinstance(artifact, ArtifactRef) for artifact in self.artifacts):
+            raise ValueError("Expected ArtifactRef elements")
+        object.__setattr__(self, "artifacts", tuple(self.artifacts))
         if len({artifact.id for artifact in self.artifacts}) != len(self.artifacts):
             raise ValueError("Duplicate result artifact ID")

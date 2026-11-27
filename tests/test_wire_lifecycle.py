@@ -227,3 +227,24 @@ def test_unknown_cancel_id_cannot_change_job(job, event_frames):
         lifecycle.can_acknowledge_cancel(Cancel(uuid4()))
     assert caught.value.code == ErrorCode.INVALID_MESSAGE
     assert lifecycle.state == JobState.RUNNING
+
+
+def test_nested_job_round_trip_is_independent_and_json_native(job):
+    from dataclasses import replace
+
+    original = {"nested": {"arrays": [1, {"name": "Рельеф", "items": [2, 3]}]}}
+    snapshot = replace(job, parameters=original)
+    frame = encode_command(snapshot)
+    native = decode_frame(frame)["parameters"]
+    assert type(native["nested"]) is dict
+    assert type(native["nested"]["arrays"]) is list
+    assert decode_command(frame) == snapshot
+    restored = decode_command(frame)
+    native["nested"]["arrays"].append(4)
+    original["nested"]["arrays"].append(5)
+    assert (
+        restored.parameters["nested"]["arrays"]
+        == snapshot.parameters["nested"]["arrays"]
+    )
+    assert restored.parameters["nested"]["arrays"][1]["name"] == "Рельеф"
+    assert encode_command(restored) == frame

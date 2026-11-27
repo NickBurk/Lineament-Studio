@@ -1,4 +1,4 @@
-from dataclasses import replace
+from dataclasses import FrozenInstanceError, replace
 from threading import Thread
 from uuid import UUID, uuid4
 
@@ -135,3 +135,117 @@ def test_parameter_rejects_non_finite_json_values(value):
         ParameterType.OBJECT if isinstance(value, dict) else ParameterType.NUMBER
     )
     assert not parameter_type.accepts(value)
+
+
+def test_job_nested_parameters_are_independent_and_immutable(job):
+    from types import MappingProxyType
+
+    original = {"thresholds": {"canny": [20, 40]}, "layers": [{"label": "Рельеф"}]}
+    snapshot = replace(job, parameters=original)
+    original["thresholds"]["canny"].append(80)
+    original["layers"][0]["label"] = "changed"
+    assert snapshot.parameters["thresholds"]["canny"] == (20, 40)
+    assert snapshot.parameters["layers"][0]["label"] == "Рельеф"
+    assert isinstance(snapshot.parameters["thresholds"], MappingProxyType)
+    with pytest.raises(TypeError):
+        snapshot.parameters["thresholds"]["canny"] = (1,)
+    with pytest.raises(AttributeError):
+        snapshot.parameters["thresholds"]["canny"].append(80)
+    assert (
+        replace(job, parameters=snapshot.parameters).parameters == snapshot.parameters
+    )
+
+
+@pytest.mark.parametrize(
+    "invalid",
+    [
+        {"bad": object()},
+        {"bad": float("nan")},
+        {"bad": float("inf")},
+        {1: "bad"},
+        {"bad": {"nested": float("-inf")}},
+    ],
+)
+def test_job_rejects_invalid_nested_json(job, invalid):
+    with pytest.raises(ValueError):
+        replace(job, parameters=invalid)
+
+
+def test_job_rejects_cycles_and_excessive_nesting(job):
+    cycle = []
+    cycle.append(cycle)
+    nested = []
+    for _ in range(65):
+        nested = [nested]
+    for value in (cycle, nested):
+        with pytest.raises(ValueError):
+            replace(job, parameters={"value": value})
+
+
+def test_registry_returns_stable_immutable_nested_parameters(job):
+    original = {"options": {"cuts": [1, 2]}}
+    declaration = {"options": Parameter(ParameterType.OBJECT)}
+    descriptor = AlgorithmDescriptor(
+        job.algorithm, {"source"}, {"summary"}, declaration
+    )
+    registry = AlgorithmRegistry()
+    registry.register(descriptor)
+    snapshot = replace(job, parameters=original)
+    first = registry.validate(snapshot)
+    original["options"]["cuts"].append(3)
+    declaration["options"] = Parameter(ParameterType.STRING)
+    with pytest.raises(TypeError):
+        first["options"]["cuts"] = (3,)
+    with pytest.raises(AttributeError):
+        first["options"]["cuts"].append(3)
+    assert first == registry.validate(snapshot)
+    assert first["options"]["cuts"] == (1, 2)
+    assert descriptor.parameters["options"].kind is ParameterType.OBJECT
+    assert registry.resolve(job.algorithm) is descriptor
+    with pytest.raises(TypeError):
+        descriptor.parameters["options"] = Parameter(ParameterType.STRING)
+
+
+def test_registry_accepts_immutable_json_arrays(job):
+    registry = AlgorithmRegistry()
+    registry.register(
+        AlgorithmDescriptor(
+            job.algorithm,
+            {"source"},
+            {"summary"},
+            {"values": Parameter(ParameterType.ARRAY)},
+        )
+    )
+    data = [1, {"nested": [2]}]
+    snapshot = replace(job, parameters={"values": data})
+    assert registry.validate(snapshot)["values"] == (1, {"nested": (2,)})
+    data[1]["nested"].append(3)
+    assert registry.validate(snapshot)["values"][1]["nested"] == (2,)
+
+
+def test_result_normalizes_list_without_retaining_it(job):
+    first = ArtifactRef(uuid4(), "summary")
+    original = [first]
+    result = JobResult(job.id, job.algorithm, original)
+    original.append(ArtifactRef(uuid4(), "summary"))
+    assert result.artifacts == (first,)
+    assert JobResult(job.id, job.algorithm, (first,)).artifacts == (first,)
+    with pytest.raises(FrozenInstanceError):
+        result.artifacts += (first,)
+
+
+@pytest.mark.parametrize(
+    "artifacts", ["text", b"bytes", {"id": 1}, iter(()), [object()], (None,)]
+)
+def test_result_rejects_invalid_artifact_collection(job, artifacts):
+    with pytest.raises(ValueError, match="artifact|Artifact"):
+        JobResult(job.id, job.algorithm, artifacts)
+
+
+def test_job_does_not_accept_mutable_custom_scalars(job):
+    class MutableString(str):
+        pass
+
+    value = MutableString("first")
+    snapshot = replace(job, parameters={"name": value})
+    assert type(snapshot.parameters["name"]) is str

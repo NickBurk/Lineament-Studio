@@ -9,8 +9,9 @@ Phase 1 candidate for PR review. The distribution is `lineament-core 0.1.0` for 
 - `domain.GeometricRank` has G1/G2/G3. `domain.GeologicalOrder` carries an independently supplied expert label.
 - `application.AlgorithmRegistry` is explicit and instance-scoped. Register a descriptor per exact algorithm ID and version. A duplicate pair fails. A known ID with an unavailable version has a distinct error from an unknown ID.
 - `application.Algorithm` exposes a descriptor and typed `run(job, parameters, cancellation, report_progress, report_warning)` port returning a `JobResult`. Descriptors declare input slots, allowed output kinds, parameters and defaults, resource profiles and support for progress/cancel. A scientific adapter supplies its CRS, units, numeric behavior, requirements and fixture specification through the descriptor.
-- `registry.validate(job)` requires every declared input slot and rejects extra slots, unknown parameters and resource profiles. It returns normalized values with scalar defaults. Parameter types are boolean, integer, number, string, array and object. A boolean is distinct from an integer. Nested values must be valid JSON. Complex parameter structure and scientific ranges are validated by the algorithm adapter. Treat nested values as read-only during evaluation.
-- `registry.validate_result(job, result)` verifies job ID, algorithm version and allowed artifact kinds. The result carries its independent schema version and unique artifact UUIDs. Artifact references may carry declared spatial information.
+- `Job` takes an independent recursive snapshot of its JSON object parameters at construction. Nested objects become read-only mappings and arrays become tuples; source dictionaries and lists cannot change the job. Invalid JSON values, non-string object keys, cycles, non-finite numbers and nesting deeper than 64 levels are rejected. The snapshot is independent of project persistence.
+- `registry.validate(job)` requires every declared input slot and rejects extra slots, unknown parameters and resource profiles. It returns a read-only mapping of normalized values with scalar defaults. Nested values are the immutable job snapshot, with no mutable reference exposed to callers. Parameter types are boolean, integer, number, string, array and object. A boolean is distinct from an integer. Complex parameter structure and scientific ranges are validated by the algorithm adapter.
+- `JobResult` accepts a list or tuple of `ArtifactRef` values, snapshots it as a tuple, and rejects other collections, invalid members and duplicate artifact UUIDs. `registry.validate_result(job, result)` verifies job ID, algorithm version and allowed artifact kinds. The result carries its independent schema version. Artifact references may carry declared spatial information.
 - `diagnostics.ContractError.code` is a stable `ErrorCode`. Warnings use `WarningCode`; clients can map codes to localized text. `explanation(code)` returns a fixed English message. Receiver errors omit raw input and exception text.
 
 ```python
@@ -37,6 +38,12 @@ registry.register(AlgorithmDescriptor(
 ))
 assert registry.validate(job) == {"title": "Рельеф", "tiles": 1}
 ```
+
+For nested parameters, `job.parameters["options"]["cuts"]` is a tuple and the
+enclosing `options` mapping is read-only. `registry.validate(job)` preserves those
+immutable values. At `encode_command`, recursive conversion restores JSON objects
+and arrays; decoding creates a new independent snapshot. The wire shape and version
+are unchanged.
 
 ## JSON/JSONL framing and commands
 

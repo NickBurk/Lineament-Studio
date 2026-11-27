@@ -33,23 +33,53 @@ class Job:
         require_id(self.id)
         require_label(self.resource_profile)
         object.__setattr__(self, "inputs", MappingProxyType(dict(self.inputs)))
-        object.__setattr__(self, "parameters", MappingProxyType(dict(self.parameters)))
+        if not isinstance(self.parameters, Mapping):
+            raise ValueError("Expected JSON object parameters")
+        object.__setattr__(self, "parameters", freeze_json(self.parameters))
 
 
 def is_json_value(value: object, depth: int = 0) -> bool:
-    """Check JSON-native types and bound nesting, including for in-process callers."""
-    if depth > 64:
+    """Validate JSON values, including immutable snapshots, within 64 levels."""
+    try:
+        freeze_json(value, depth)
+    except (ValueError, TypeError, RecursionError):
         return False
+    return True
+
+
+def freeze_json(
+    value: object, depth: int = 0, active: set[int] | None = None
+) -> object:
+    """Copy nested JSON data into immutable structures without retaining input references."""
+    if depth > 64:
+        raise ValueError("JSON nesting exceeds 64 levels")
+    if isinstance(value, str):
+        return str(value)
+    if value is None or type(value) in (int, bool):
+        return value
     if type(value) is float:
-        return math.isfinite(value)
-    if type(value) is list:
-        return all(is_json_value(item, depth + 1) for item in value)
-    if type(value) is dict:
-        return all(
-            isinstance(key, str) and is_json_value(item, depth + 1)
-            for key, item in value.items()
-        )
-    return value is None or isinstance(value, str) or type(value) in (int, bool)
+        if math.isfinite(value):
+            return value
+        raise ValueError("Non-finite JSON number")
+    if not isinstance(value, (Mapping, list, tuple)):
+        raise ValueError("Unsupported JSON value")
+    active = set() if active is None else active
+    if id(value) in active:
+        raise ValueError("Cyclic JSON structure")
+    active.add(id(value))
+    try:
+        if isinstance(value, Mapping):
+            if any(type(key) is not str for key in value):
+                raise ValueError("JSON object keys must be strings")
+            return MappingProxyType(
+                {
+                    key: freeze_json(item, depth + 1, active)
+                    for key, item in value.items()
+                }
+            )
+        return tuple(freeze_json(item, depth + 1, active) for item in value)
+    finally:
+        active.remove(id(value))
 
 
 class ParameterType(StrEnum):
@@ -66,8 +96,8 @@ class ParameterType(StrEnum):
             self.INTEGER: (int,),
             self.NUMBER: (int, float),
             self.STRING: (str,),
-            self.ARRAY: (list,),
-            self.OBJECT: (dict,),
+            self.ARRAY: (list, tuple),
+            self.OBJECT: (dict, MappingProxyType),
         }
         return type(value) in value_types[self] and is_json_value(value)
 
@@ -135,7 +165,7 @@ class AlgorithmRegistry:
             raise ContractError(ErrorCode.UNSUPPORTED_ALGORITHM_VERSION)
         raise ContractError(ErrorCode.UNKNOWN_OPERATION)
 
-    def validate(self, job: Job) -> dict[str, object]:
+    def validate(self, job: Job) -> Mapping[str, object]:
         descriptor = self.resolve(job.algorithm)
         if job.inputs.keys() != descriptor.input_names or any(
             not isinstance(item, SourceAssetRef) for item in job.inputs.values()
@@ -151,7 +181,7 @@ class AlgorithmRegistry:
             if not parameter.kind.accepts(value):
                 raise ContractError(ErrorCode.INVALID_PARAMETERS)
             values[name] = value
-        return values
+        return MappingProxyType(values)
 
     def validate_result(self, job: Job, result: JobResult) -> None:
         descriptor = self.resolve(job.algorithm)

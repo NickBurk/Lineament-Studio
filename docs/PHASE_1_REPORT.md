@@ -116,3 +116,30 @@ The first Windows run hit the 32,767-character Windows environment variable limi
 included the 64 KiB payload in `PYTEST_CURRENT_TEST`. The corrected test uses a short case ID and
 retains the same payload and assertions. Both environments passed on the next run.
 [First run and failure evidence](https://github.com/NickBurk/Lineament-Studio/actions/runs/45938769481)
+
+## LS-1-01 snapshot integrity correction
+
+The initial `Job.parameters` constructor copied only the outer dictionary. Nested dictionaries
+and lists still pointed to caller-owned mutable objects. `AlgorithmRegistry.validate()` returned
+a mutable dictionary containing those values. `JobResult.artifacts` accepted an unvalidated
+collection, so a caller could alter a result through its original list.
+
+The correction recursively copies JSON parameters into read-only mappings and tuples, rejecting
+invalid scalars, non-string keys, cycles and nesting beyond 64 levels. Registry validation returns
+a read-only mapping over the immutable job values. `JobResult` validates artifact types and unique
+IDs and snapshots list or tuple input as a tuple. The command encoder converts the internal values
+back to JSON objects and arrays. The wire schema, API version, ADRs and runtime dependencies are
+unchanged.
+
+New regression tests in `test_domain_application.py` cover nested source mutation, direct nested
+mutation attempts, invalid JSON numbers and types, cycles, depth, registry stability and descriptor
+isolation, and result collection normalization and validation. A test in `test_wire_lifecycle.py`
+covers nested Unicode command round-trip, JSON container types and decoded snapshot independence.
+The original 47 tests and 18 new tests passed locally on CPython 3.11.18 (65 passed, 0 failed,
+0 skipped, 0.30 s). `uv sync --locked --python 3.11`, wheel build, clean wheel install and import,
+Ruff lint, Ruff format check and `git diff --check` passed. `uv` used the workspace cache because
+the default home cache is read-only in this execution environment.
+
+The exact correction commit and new-head Windows/Linux CI evidence are recorded after publication.
+The previous CI run above verifies the original Phase 1 candidate only and is not evidence for
+LS-1-01.

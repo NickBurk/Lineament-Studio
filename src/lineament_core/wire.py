@@ -3,6 +3,7 @@
 import json
 import math
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import StrEnum
@@ -176,12 +177,21 @@ def encode_command(command: Job | Cancel) -> bytes:
             "operation": command.algorithm.id,
             "algorithm_version": command.algorithm.version,
             "inputs": {name: str(asset.id) for name, asset in command.inputs.items()},
-            "parameters": dict(command.parameters),
+            "parameters": _json_data(command.parameters),
             "resource_profile": command.resource_profile,
         }
     frame = encode_frame({"protocol_version": PROTOCOL_VERSION, **message})
     decode_command(frame)
     return frame
+
+
+def _json_data(value: object) -> object:
+    """Turn validated immutable parameters back into JSON-native containers."""
+    if isinstance(value, Mapping):
+        return {key: _json_data(item) for key, item in value.items()}
+    if isinstance(value, tuple):
+        return [_json_data(item) for item in value]
+    return value
 
 
 def decode_command(frame: bytes) -> Job | Cancel:
