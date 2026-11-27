@@ -17,8 +17,12 @@
 - **Asset record:** identity и метаданные входного или производного ресурса.
 - **Manifest authority:** источник истины для identity проекта, конфигурации и пользовательских source declarations.
 - **SQLite projection:** индекс этих значений с revision/digest исходного manifest.
-- **Operation:** стабильный UUID и digest запроса для дедупликации и повторов.
-- **PREPARED:** долговечная запись восстановления, созданная до любой замены manifest.
+- **job_id:** UUID вычислительного задания согласно Core Contracts.
+- **publication_id:** предлагаемый внутренний UUID одной долговечной публикации уже созданных artifacts.
+- **result_id:** UUID опубликованного результата.
+- **Committed PREPARED:** intent committed SQLite transaction и видим через согласованное чтение; это не доказательство power-loss durability.
+- **Required durability:** требование пережить поддерживаемый класс отказов до замены manifest.
+- **Verified durability:** требование подтверждено испытаниями точной конфигурации; сейчас NOT VERIFIED.
 
 ## 2. Data Ownership: варианты и последствия
 
@@ -59,11 +63,11 @@
 
 ### 3.2 State machine и intent
 
-Состояния: STAGING (временное, не опубликовано), PREPARED (durable intent committed), MANIFEST_INSTALLED (определяется проверкой digest), CATALOG_COMMITTED (projection/result transaction committed), COMPLETED (durable receipt), CLEANUP_PENDING (результат завершён, остатки не удалены), ABORTED (старый manifest подтверждён, результат не публиковался).
+Состояния протокола публикации (не новые Core Lifecycle states): STAGING (подготовка, не опубликовано), PREPARED_COMMITTED (SQLite transaction committed и intent читаем; physical durability NOT VERIFIED), MANIFEST_INSTALLED (bytes совпадают с target digest), CATALOG_COMMITTED (projection/result transaction committed), COMPLETED (publication terminal state), CLEANUP_PENDING (публикация завершена, cleanup остался), ABORTED (старый manifest подтверждён, result не виден). Required durability остаётся обязательным; Verified durability отсутствует до испытаний.
 
 Intent хранит минимум:
 
-- publication_id UUID, canonical publication-request digest; внешний idempotency key не вводится без отдельного контрактного решения;
+- publication_id UUID, canonical publication-request digest; job_id и result_id — отдельные значения/ссылки; внешний idempotency key не вводится без решения OQ-24;
 - project_id, expected revision/digest, target revision/digest;
 - полные новые manifest bytes (или immutable prepared file с проверенными length/digest), старые bytes/digest для rollback;
 - список artifacts: asset/result IDs, stage path, final relative path, length, digest, type и validation summary;
@@ -77,10 +81,10 @@ Intent хранит минимум:
 2. **STAGING.** Писать артефакты в уникальный operation-scoped каталог на том же томе, что и конечные пути. Опубликованные файлы неизменяемы; источники Reference доступны только для чтения.
 3. **Flush и проверка staging.** Закрыть GDAL/SQLite/file handles; выполнить FlushFileBuffers; проверить длину, digest и read-back. Для GeoTIFF проверить открытие, CRS, transform, размеры, dtype, NoData, bands; для GPKG — SQLite integrity и таблицы/геометаданные. Использовать документированную Windows/filesystem процедуру для durability directory entries. Если порядок нельзя подтвердить, strong guarantee не заявлять.
 4. **Prepare manifest.** Сформировать новую revision без изменения project_id; сериализовать детерминированный UTF-8 JSON; провалидировать schema; записать temp в том же каталоге; FlushFileBuffers, перечитать и проверить digest. Сохранить старые bytes/digest для восстановления. Текущий manifest пока не трогать.
-5. **Durable PREPARED.** SQLite BEGIN IMMEDIATE; вставить operation/artifact/manifest intent со статусом PREPARED и уникальными operation/result IDs; commit с конфигурацией, выбранной после отдельного испытания S-01. До выбора не считать synchronous=FULL общей гарантией; проверить read-after-commit и digest intent. До успешного commit и проверки вызов замены manifest запрещён. При ошибке — не заменять manifest и не публиковать файлы.
+5. **Commit PREPARED.** SQLite BEGIN IMMEDIATE; записать intent со статусом PREPARED_COMMITTED и publication_id/result_id; commit с candidate profile. Read-after-commit подтверждает только наблюдаемую committed запись, не физическую долговечность. Перед заменой manifest требуется Verified durability для поддерживаемого класса отказов; сейчас она NOT VERIFIED, поэтому production replacement не разрешён до испытаний и решения владельца. До успешного commit и проверки вызов замены manifest запрещён. При ошибке — не заменять manifest и не публиковать файлы.
 6. **Atomic manifest replacement.** Для существующего manifest использовать same-volume Windows ReplaceFileW с сохранением восстанавливаемой старой версии; создание первого manifest — same-volume rename с отдельно проверенной семантикой. Повторно открыть и проверить digest. При ошибке/неоднозначном результате оставить PREPARED и проверять старый/новый/backup digest; не делать delete-then-rename.
 7. **Artifact promotion и SQLite projection.** Переместить staged immutable artifacts в детерминированные result paths тем же томом без перезаписи. Существующий target допустим только при полном совпадении ID и digest. Затем одна SQLite transaction проверяет PREPARED и старую revision, обновляет projection, вставляет result references с уникальными operation/result IDs, пишет success event и меняет статус на CATALOG_COMMITTED. Читатель не видит частичные строки.
-8. **Завершение.** Следующей SQLite transaction отметить COMPLETED и сохранить receipt. Точный повтор operation/request возвращает тот же receipt; тот же key с другим request digest — conflict. Не вычислять и не публиковать результат повторно.
+8. **Завершение.** Следующей SQLite transaction отметить COMPLETED и сохранить receipt. Повтор recovery по тому же publication_id продолжает ту же публикацию и не создаёт второй result_id. Внешняя receipt/idempotency-key семантика этим proposal не задаётся.
 9. **Cleanup.** Только после durable COMPLETED и проверки согласованности удалять staging debris/старый manifest backup. Ошибка cleanup оставляет CLEANUP_PENDING; результат не откатывается. Cleanup повторяем и не касается исходников/shared artifacts.
 
 ### 3.4 Восстановление
@@ -100,7 +104,7 @@ Intent хранит минимум:
 
 Инварианты:
 
-1. PREPARED commit и read-after-commit предшествуют единственному пути вызова manifest replacement. Проверки непосредственно до/после commit и вокруг replacement должны доказать: после fault либо старый manifest, либо доступный durable intent.
+1. Committed PREPARED и читаемый intent предшествуют единственному пути replacement. Это не равно durability. Требование durability не снимается; Verified durability сейчас NOT VERIFIED, поэтому production replacement не разрешён до профильно привязанных испытаний.
 2. Результат виден только после catalog transaction и согласования manifest/catalog revision.
 3. Уникальность operation/result ID исключает повторную публикацию при replay.
 4. Конечные пути валидируются, relative, same-volume; existing target не перезаписывается без точного совпадения.
