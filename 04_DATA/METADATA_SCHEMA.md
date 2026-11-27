@@ -88,3 +88,34 @@ provenance, annotation sets and reproducibility metadata. Their eventual schemas
 remain separate from the restricted project manifest and current catalog DDL.
 Current Hillshade result provenance is validated by
 `src/lineament_core/infrastructure/data/provenance.py`.
+
+## Future product schema requirements
+
+These normative requirements retain their original priorities and optionality. This
+section does not formally defer them or claim they are implemented. The current
+Manifest 1.1 / SQLite 2 and Hillshade provenance specification above remain applicable.
+
+### Experiment manifest
+`experiment_id`, `project_id`, `created_at`, `dem_asset_id`, `dem_checksum`,
+`algorithm_versions`, `parameters`, `crs`, `software_versions`, `dependency_versions`,
+`resource_profile`, `random_seed` (если применимо), `outputs`, `output_checksums`, `warnings`.
+
+### Source asset
+`asset_id`, `path/URI`, `storage_mode`, `format`, `checksum`, `CRS`, `dimensions`,
+`pixel_size`, `extent`, `NoData`, `dtype`, `band`, `source/provider`, `license/terms`
+(если известны), `acquisition_date` (если известна).
+
+### Provenance
+Для каждого производного результата сохраняются входные asset IDs/checksums, параметры,
+версия алгоритма, версия приложения/зависимостей, дата, CRS, единицы, предупреждения и checksum.
+
+### Экспертная разметка
+Annotation Set содержит устойчивый ID, автора/идентификатор эксперта, дату, версию схемы,
+источник, критерии, словарь классов и историю импорта/экспорта. Consensus Set хранит ссылки
+на исходные Annotation Sets и явные решения конфликтов.
+
+### Безопасность
+Секреты доступа к сервисам не сохраняются в открытом manifest. Абсолютные пользовательские
+пути не коммитятся в Git. Импортируемые manifests проверяются до использования.
+
+Unsafe serialization, including Python objects/pickle, is prohibited.

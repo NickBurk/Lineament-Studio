@@ -67,7 +67,11 @@ MyProject/
 
 ## 6. Безопасная запись
 Текущий local development profile использует SQLite WAL + FULL, один cooperating writer,
-durable PREPARED intent до замены manifest и recovery с проверкой publication receipt.
+PREPARED_COMMITTED до замены manifest и recovery с проверкой publication receipt.
+PREPARED_COMMITTED означает успешный SQLite commit; видимость intent и восстановление
+после process crash проверены тестами. Требуемая физическая долговечность записи остаётся
+продуктовым требованием. Physical power-loss durability: **NOT VERIFIED** на любой
+файловой системе. Это не закрывает broader product gate или ACR-003.
 Manifest валидируется до публикации; результат регистрируется после проверки артефакта.
 Эти гарантии проверены для documented local profile, но не доказывают power-loss durability
 на всех файловых системах. Project Storage — единственный write authority: manifest владеет
