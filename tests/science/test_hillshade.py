@@ -116,3 +116,113 @@ def test_cancellation_and_small_raster(tmp_path):
     with rasterio.open(out) as got:
         assert got.read(1).item() == -1
     assert updates == [1.0]
+
+
+@pytest.mark.parametrize("offset", [0.0, 113.0])
+def test_physical_scaled_integer_matches_float(tmp_path, offset):
+    transform = Affine(2, 0.5, 500000, 0.25, -3, 5500000)
+    raw = np.arange(99, dtype="int16").reshape(9, 11)
+    raw[4, 4] = -9999
+    physical = raw.astype("float64") * 0.5 + offset
+    physical[4, 4] = -9999
+    light = Illumination(135, 1, 1)
+    results = []
+    for name, values, scale, bias in (
+        ("float", physical, 1.0, 0.0),
+        ("scaled", raw, 0.5, offset),
+    ):
+        source = tmp_path / f"{name}.tif"
+        with rasterio.open(
+            source,
+            "w",
+            driver="GTiff",
+            width=11,
+            height=9,
+            count=1,
+            transform=transform,
+            crs="EPSG:32633",
+            dtype=values.dtype,
+            nodata=-9999,
+        ) as ds:
+            ds.write(values, 1)
+            ds.scales, ds.offsets = (scale,), (bias,)
+        for tile in (3, 12):
+            output = tmp_path / f"{name}-{tile}.tif"
+            run(source, output, light, tile=tile)
+            with rasterio.open(output) as ds:
+                results.append(ds.read(1))
+    for result in results[1:]:
+        np.testing.assert_array_equal(result == -1.0, results[0] == -1.0)
+        np.testing.assert_allclose(result, results[0], atol=2e-7, rtol=0)
+    assert np.all(results[0][3:6, 3:6] == -1.0)
+
+
+@pytest.mark.parametrize(
+    "scale,offset,error",
+    [
+        (0.0, 0.0, "positive band scale"),
+        (-1.0, 0.0, "positive band scale"),
+        (1e308, 0.0, "float64 range"),
+        (1e308, 1e308, "float64 range"),
+        (float("inf"), 0.0, "positive band scale"),
+        (1.0, float("nan"), "finite offset"),
+    ],
+)
+def test_unsupported_calibration_fails_explicitly(tmp_path, scale, offset, error):
+    from lineament_core.infrastructure.gis.raster import inspect_dem
+
+    source, output = tmp_path / "source.tif", tmp_path / "result.tif"
+    with rasterio.open(
+        source,
+        "w",
+        driver="GTiff",
+        width=5,
+        height=5,
+        count=1,
+        transform=Affine(2, 0, 20, 0, -2, 30),
+        crs="EPSG:32633",
+        dtype="int16",
+    ) as ds:
+        ds.write(np.full((5, 5), 3, dtype="int16"), 1)
+        ds.scales, ds.offsets = (scale,), (offset,)
+    with pytest.raises(ValueError, match=error):
+        inspect_dem(source)
+    with pytest.raises(ValueError, match=error):
+        run(source, output, Illumination(315, 1, 1), tile=3)
+    assert not output.exists()
+
+
+def test_internal_mask_and_raw_nodata_precede_calibration(tmp_path):
+    from lineament_core.infrastructure.gis.raster import inspect_dem
+
+    src = tmp_path / "masked.tif"
+    raw = np.full((9, 9), 7, dtype="int16")
+    raw[2, 2] = -9999
+    mask = np.full((9, 9), 255, dtype="uint8")
+    mask[6, 6] = 0
+    with (
+        rasterio.Env(GDAL_TIFF_INTERNAL_MASK=True),
+        rasterio.open(
+            src,
+            "w",
+            driver="GTiff",
+            width=9,
+            height=9,
+            count=1,
+            dtype="int16",
+            crs="EPSG:32633",
+            transform=Affine(2, 0, 500, 0, -2, 700),
+            nodata=-9999,
+        ) as ds,
+    ):
+        ds.write(raw, 1)
+        ds.write_mask(mask)
+        ds.scales, ds.offsets = (0.5,), (10.0,)
+    assert inspect_dem(src)["valid_pixels"] == 79
+    outcome = tmp_path / "result.tif"
+    run(src, outcome, Illumination(135, 1, 1), tile=3)
+    with rasterio.open(outcome) as ds:
+        values = ds.read(1)
+    assert np.all(values[1:4, 1:4] == -1.0)
+    assert np.all(values[5:8, 5:8] == -1.0)
+    assert values[4, 4] == pytest.approx(2**-0.5, abs=2e-7)

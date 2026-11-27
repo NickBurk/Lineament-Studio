@@ -10,6 +10,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
+from ..gis.raster import SidecarError, inspect_dem, require_self_contained
+from .provenance import raster_metadata, validate_provenance
+
 from .manifest import (
     DIRECTORIES,
     FORMAT,
@@ -75,9 +78,10 @@ CREATE TABLE results(id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES pr
                      path TEXT NOT NULL UNIQUE, checksum TEXT NOT NULL, provenance TEXT NOT NULL);
 CREATE TABLE pending(slot INTEGER PRIMARY KEY CHECK(slot=1), publication_id TEXT NOT NULL,
                      before BLOB NOT NULL, after BLOB NOT NULL, payload TEXT NOT NULL);
-CREATE TABLE receipts(publication_id TEXT PRIMARY KEY, relink_json TEXT);
+CREATE TABLE receipts(publication_id TEXT PRIMARY KEY, relink_json TEXT,
+                      result_id TEXT UNIQUE REFERENCES results(id));
 CREATE TABLE migrations(version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL);
-PRAGMA user_version=1;
+PRAGMA user_version=2;
 """
 
 
@@ -132,7 +136,7 @@ class Project:
                 db.execute(
                     "INSERT INTO project VALUES(?,?)", (project["project_id"], manifest)
                 )
-                db.execute("INSERT INTO migrations VALUES(1,?)", (ts,))
+                db.execute("INSERT INTO migrations VALUES(?,?)", (int(SCHEMA), ts))
             stage.rename(root)
         return cls.open(root)
 
@@ -161,7 +165,7 @@ class Project:
             for suffix in ("-wal", "-shm", "-journal"):
                 internal(self.root, "project.sqlite" + suffix)
             with closing(connect(catalog)) as db:
-                if db.execute("PRAGMA user_version").fetchone() != (1,):
+                if db.execute("PRAGMA user_version").fetchone() != (int(SCHEMA),):
                     raise ProjectError("Unsupported catalog version")
                 row = db.execute("SELECT id, manifest FROM project").fetchall()
                 if len(row) != 1 or row[0][0] != project["project_id"]:
@@ -189,6 +193,10 @@ class Project:
                 if (
                     indexed != {asset["asset_id"] for asset in project["assets"]}
                     or db.execute("PRAGMA foreign_key_check").fetchone()
+                    or db.execute(
+                        "SELECT 1 FROM results r LEFT JOIN receipts p ON p.result_id=r.id "
+                        "WHERE p.result_id IS NULL LIMIT 1"
+                    ).fetchone()
                 ):
                     raise ProjectError("Catalog projection is inconsistent")
                 yield db, current, project
@@ -204,19 +212,39 @@ class Project:
         ):
             raise ProjectError("Unrecognized publication state")
         item = json.loads(data)
+        if encode(item).decode() != data:
+            raise ProjectError("Noncanonical publication intent")
+        result = item.get("result")
+        if result is not None:
+            source_id = identity(result["source_id"])
+            identity(result["job_id"])
+            asset = next((a for a in new["assets"] if a["asset_id"] == source_id), None)
+            if (
+                asset is None
+                or item["file"][0] != f"results/{identity(result['id'])}.tif"
+            ):
+                raise ProjectError("Inconsistent result publication intent")
+            validate_provenance(
+                result["provenance"],
+                source_id=source_id,
+                output_checksum=item["file"][1],
+                bound_asset=asset,
+            )
         if item.get("file"):
             uri, digest = item["file"]
             if not uri.startswith(("inputs/dem/", "results/")):
                 raise ProjectError("Unsafe publication destination")
             final = internal(self.root, uri)
             stage = internal(self.root, f"cache/{operation}.stage")
+            require_self_contained(final)
+            require_self_contained(stage)
             if final.exists():
                 if checksum(final) != digest:
                     raise ProjectError("Publication target differs from intent")
             else:
                 if not stage.is_file() or checksum(stage) != digest:
                     raise ProjectError("Publication staging is missing or damaged")
-                stage.rename(final)
+                os.link(stage, final)
             self.checkpoint("artifact_promoted")
         if current != after:
             temp = internal(self.root, f"cache/{operation}.manifest")
@@ -248,8 +276,12 @@ class Project:
                 "UPDATE project SET manifest=? WHERE id=?", (after, new["project_id"])
             )
             db.execute(
-                "INSERT INTO receipts VALUES(?,?)",
-                (operation, json.dumps(item.get("relink"))),
+                "INSERT INTO receipts VALUES(?,?,?)",
+                (
+                    operation,
+                    json.dumps(item.get("relink")),
+                    result["id"] if result else None,
+                ),
             )
             db.execute("DELETE FROM pending")
             self.checkpoint("catalog_transaction")
@@ -272,6 +304,7 @@ class Project:
         result=None,
         relink=None,
         expected=None,
+        before_intent=None,
     ):
         project["modified_at"] = now()
         after = encode(project)
@@ -295,6 +328,14 @@ class Project:
                     validator(stage)
                 item["file"] = [uri, digest]
             self.checkpoint("staged")
+            if result is not None:
+                validate_provenance(
+                    result["provenance"],
+                    source_id=result["source_id"],
+                    output_checksum=item["file"][1],
+                )
+            if before_intent:
+                before_intent()
             intent_started = True
             with db:
                 db.execute(
@@ -326,37 +367,53 @@ class Project:
                     job_id=j,
                     path=p,
                     checksum=c,
-                    provenance=json.loads(v),
+                    provenance=self._read_provenance(v, s, c),
                 )
                 for i, s, j, p, c, v in results
             ]
             for result in project["results"]:
                 path = internal(self.root, result["path"])
+                require_self_contained(path)
                 if not path.is_file() or checksum(path) != result["checksum"]:
                     raise ProjectError("Published raster is missing or damaged")
             return project
+
+    @staticmethod
+    def _read_provenance(raw, source_id, digest):
+        record = json.loads(raw)
+        if (
+            validate_provenance(
+                record, source_id=source_id, output_checksum=digest
+            ).decode()
+            != raw
+        ):
+            raise ProjectError("Noncanonical result provenance")
+        return record
 
     def save(self, *, default_profiles):
         with self._access() as (db, before, project):
             project["default_profiles"] = default_profiles
             self._publish(db, before, project)
 
-    def add_dem(self, source, mode, inspect):
+    def add_dem(self, source, mode, inspect=inspect_dem):
         if mode not in ("reference", "copy"):
             raise ProjectError("Expected Reference or Copy")
         source = external(str(Path(source).absolute()))
         with self._access() as (db, before, project):
             key = str(uuid4())
             uri = str(source) if mode == "reference" else f"inputs/dem/{key}.tif"
+            require_self_contained(source)
             digest = checksum(source)
             metadata = inspect(source)
+            require_self_contained(source)
             if checksum(source) != digest:
                 raise ProjectError("Source changed during inspection")
-            if mode == "copy" and metadata.get("sidecars"):
-                raise ProjectError("Copy requires a self-contained GeoTIFF")
+            if metadata.get("sidecars"):
+                raise ProjectError("A self-contained GeoTIFF is required")
             project["assets"].append(
                 dict(
                     asset_id=key,
+                    source_version_id=str(uuid4()),
                     role="primary_dem",
                     storage_mode=mode,
                     uri=uri,
@@ -388,6 +445,9 @@ class Project:
             path = self._asset_path(asset)
             try:
                 digest = checksum(path)
+                require_self_contained(path)
+            except SidecarError:
+                return path, "unsupported_sidecars"
             except FileNotFoundError:
                 return path, "missing"
             except OSError:
@@ -397,48 +457,167 @@ class Project:
                 digest,
             ) else "available"
 
-    def relink(self, key, path, inspect, *, accept_changed=False):
+    def relink(self, key, path, inspect=inspect_dem, *, accept_changed=False):
         path = external(str(Path(path).absolute()))
         with self._access() as (db, before, project):
             asset = next((a for a in project["assets"] if a["asset_id"] == key), None)
             if asset is None or asset["storage_mode"] != "reference":
                 raise ProjectError("Only external references can be relinked")
+            require_self_contained(path)
             digest = checksum(path)
             metadata = inspect(path)
+            require_self_contained(path)
+            if metadata.get("sidecars"):
+                raise SidecarError("A self-contained GeoTIFF is required")
             if checksum(path) != digest:
                 raise ProjectError("Candidate changed during inspection")
             if digest != asset["checksum"] and not accept_changed:
                 raise ProjectError("Relink checksum differs and requires confirmation")
+            version = (
+                asset["source_version_id"]
+                if digest == asset["checksum"]
+                else str(uuid4())
+            )
             event = dict(
+                previous_source_version_id=asset["source_version_id"],
+                source_version_id=version,
                 asset_id=key,
                 previous_uri=asset["uri"],
                 previous_checksum=asset["checksum"],
                 uri=str(path),
                 checksum=digest,
             )
-            asset.update(uri=str(path), checksum=digest, metadata=metadata)
+            asset.update(
+                uri=str(path),
+                checksum=digest,
+                metadata=metadata,
+                source_version_id=version,
+            )
             self._publish(db, before, project, relink=event)
 
-    def register_result(self, path, *, source_id, job_id, provenance, inspect):
+    def register_result(
+        self,
+        *,
+        source_id,
+        job_id,
+        light,
+        band=1,
+        tile=512,
+        cancelled=lambda: False,
+        progress=lambda fraction: None,
+    ):
+        """Compute and publish Hillshade from a verified private byte snapshot."""
+        from dataclasses import asdict
+
+        import numpy
+        import rasterio
+
+        from lineament_core.science.hillshade import (
+            VERSION,
+            Cancelled,
+            Illumination,
+            run,
+        )
+
+        identity(source_id)
         identity(job_id)
-        with self._access() as (db, before, project):
-            if not any(a["asset_id"] == source_id for a in project["assets"]):
-                raise ProjectError("Unknown source asset")
-            key = str(uuid4())
-            result = dict(
-                id=key,
-                source_id=source_id,
-                job_id=job_id,
-                provenance={**provenance, "created_at": now()},
+        if type(light) is not Illumination:
+            raise ProjectError("Expected normalized Hillshade parameters")
+        with self._access() as (_, _, project):
+            asset = self._find_asset(project, source_id)
+            original = self._asset_path(asset)
+        # The temporary workspace is private to this run. GDAL only reads this copy.
+        with tempfile.TemporaryDirectory(prefix="lineament-hillshade-") as tmp:
+            snapshot = Path(tmp) / "input.tif"
+            require_self_contained(original)
+            if original.stat().st_size > shutil.disk_usage(tmp).free:
+                raise OSError("Insufficient disk space for verified DEM snapshot")
+            shutil.copyfile(original, snapshot)
+            if checksum(snapshot) != asset["checksum"]:
+                raise ProjectError(
+                    "Input snapshot differs from declared source content"
+                )
+            self._verify_source(asset)
+            source = raster_metadata(inspect_dem(snapshot, band=band))
+            if not source["vertical_unit"]:
+                source["vertical_unit"] = "explicit metres-per-unit"
+            output = Path(tmp) / "hillshade.tif"
+            run(
+                snapshot,
+                output,
+                light,
+                band=band,
+                tile=tile,
+                cancelled=cancelled,
+                progress=lambda fraction: progress(fraction) if fraction < 1 else None,
             )
-            path = Path(path)
-            self._publish(
-                db,
-                before,
-                project,
-                source=path,
-                uri=f"results/{key}.tif",
-                validator=inspect,
-                result=result,
+            if checksum(snapshot) != asset["checksum"]:
+                raise ProjectError("Input snapshot changed during processing")
+            digest = checksum(output)
+            provenance = dict(
+                schema_version="1",
+                source_asset_id=source_id,
+                source_checksum=asset["checksum"],
+                source_version_id=asset["source_version_id"],
+                source=source,
+                band=band,
+                created_at=now(),
+                algorithm="hillshade",
+                algorithm_version=VERSION,
+                parameters=asdict(light),
+                output=raster_metadata(inspect_dem(output)),
+                output_checksum=digest,
+                dependencies=dict(
+                    rasterio=rasterio.__version__,
+                    gdal=rasterio.__gdal_version__,
+                    proj=rasterio.__proj_version__,
+                    numpy=numpy.__version__,
+                ),
             )
-            return key
+            with self._access() as (db, before, project):
+                current = self._find_asset(project, source_id)
+                validate_provenance(
+                    provenance,
+                    source_id=source_id,
+                    output_checksum=digest,
+                    bound_asset=current,
+                )
+
+                def check_before_intent():
+                    if cancelled():
+                        raise Cancelled()
+                    self._verify_source(current)
+
+                key = str(uuid4())
+                self._publish(
+                    db,
+                    before,
+                    project,
+                    source=output,
+                    uri=f"results/{key}.tif",
+                    expected=digest,
+                    validator=require_self_contained,
+                    before_intent=check_before_intent,
+                    result=dict(
+                        id=key,
+                        source_id=source_id,
+                        job_id=job_id,
+                        provenance=provenance,
+                    ),
+                )
+        progress(1.0)
+        return key
+
+    @staticmethod
+    def _find_asset(project, source_id):
+        for asset in project["assets"]:
+            if asset["asset_id"] == source_id:
+                return asset
+        raise ProjectError("Unknown source asset")
+
+    def _verify_source(self, asset):
+        path = self._asset_path(asset)
+        require_self_contained(path)
+        if checksum(path) != asset["checksum"]:
+            raise ProjectError("Source content changed during processing")
+        require_self_contained(path)

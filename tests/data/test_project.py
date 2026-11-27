@@ -77,7 +77,7 @@ def test_unsupported_manifest_is_preserved(tmp_path):
     Project.create(root)
     path = root / "project.lspx"
     payload = path.read_bytes().replace(
-        b'"format_version":"1.0"', b'"format_version":"9.0"'
+        b'"format_version":"1.1"', b'"format_version":"9.0"'
     )
     path.write_bytes(payload)
     with pytest.raises(ProjectError, match="Unsupported"):

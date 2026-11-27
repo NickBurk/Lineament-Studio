@@ -14,8 +14,8 @@ class ProjectError(ValueError):
 
 LIMIT = 8 * 1024 * 1024
 FORMAT = "org.lineament-studio.project"
-VERSION = "1.0"
-SCHEMA = "1"
+VERSION = "1.1"
+SCHEMA = "2"
 DIRECTORIES = (
     "inputs/dem",
     "inputs/geology",
@@ -32,7 +32,9 @@ DIRECTORIES = (
 FIELDS = set(
     "format_id format_version schema_version project_id application_version created_at modified_at project_crs storage_policy catalog_uri assets default_profiles".split()
 )
-ASSET_FIELDS = set("asset_id role storage_mode uri checksum metadata".split())
+ASSET_FIELDS = set(
+    "asset_id source_version_id role storage_mode uri checksum metadata".split()
+)
 
 
 def identity(value):
@@ -138,17 +140,21 @@ def decode(raw: bytes, root: Path) -> dict:
         ):
             raise ProjectError("Invalid profiles or assets")
         seen = set()
+        versions = set()
         for asset in value["assets"]:
             if type(asset) is not dict or asset.keys() != ASSET_FIELDS:
                 raise ProjectError("Unknown or missing asset fields")
             key = identity(asset["asset_id"])
+            version = identity(asset["source_version_id"])
             if (
                 key in seen
+                or version in versions
                 or asset["role"] != "primary_dem"
                 or type(asset["metadata"]) is not dict
             ):
                 raise ProjectError("Invalid or duplicate source asset")
             seen.add(key)
+            versions.add(version)
             mode = asset["storage_mode"]
             if mode == "reference":
                 external(asset["uri"])
@@ -158,9 +164,7 @@ def decode(raw: bytes, root: Path) -> dict:
                 raise ProjectError("Invalid source location")
             if value["storage_policy"] not in ("mixed", mode):
                 raise ProjectError("Source mode does not match project policy")
-            if asset["checksum"] is not None and not re.fullmatch(
-                r"sha256:[0-9a-f]{64}", asset["checksum"]
-            ):
+            if not re.fullmatch(r"sha256:[0-9a-f]{64}", asset["checksum"]):
                 raise ProjectError("Invalid source checksum")
         encode(
             value

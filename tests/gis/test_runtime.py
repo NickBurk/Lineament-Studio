@@ -11,7 +11,7 @@ import numpy as np
 import rasterio
 from rasterio._env import get_proj_data_search_paths
 from rasterio.shutil import copy
-from rasterio.transform import from_origin
+from rasterio.transform import Affine
 from rasterio.warp import transform
 
 
@@ -29,14 +29,14 @@ def test_offline_runtime_inventory_and_geopackage(tmp_path):
             height=8,
             count=1,
             crs="EPSG:3857",
-            transform=from_origin(0, 800, 100, 100),
+            transform=Affine(100, 0, 0, 0, -100, 800),
             dtype="uint8",
         ) as ds:
             ds.write(pixels, 1)
         copy(source, gpkg, driver="GPKG", TILE_FORMAT="PNG")
         with rasterio.open(gpkg) as ds:
             assert ds.crs.to_epsg() == 3857
-            assert ds.transform == from_origin(0, 800, 100, 100)
+            assert ds.transform == Affine(100, 0, 0, 0, -100, 800)
             np.testing.assert_array_equal(ds.read(1), pixels)
         with closing(sqlite3.connect(gpkg)) as db:
             assert db.execute("PRAGMA integrity_check").fetchone() == ("ok",)
