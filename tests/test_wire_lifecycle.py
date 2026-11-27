@@ -47,7 +47,7 @@ def test_version_offer_selects_highest_exact_shared_version():
         b'{"a":NaN}\n',
         b'{"a":1e400}\n',
         b'{"a":"\\ud800"}\n',
-        b" " * MAX_FRAME_BYTES + b"{}\n",
+        pytest.param(b" " * MAX_FRAME_BYTES + b"{}\n", id="oversized-frame"),
         b'{"a":' + b"[" * 80 + b"0" + b"]" * 80 + b"}\n",
     ],
 )
