@@ -33,3 +33,10 @@ File-based JSON request + JSONL event file упрощает сохранение
 ## Проверка корректности
 
 Позитивный и негативный обмен; mismatched version; invalid JSON; duplicate job ID; reordered events; UTF-8; oversized frame; stderr burst; cooperative cancel; crash/EOF; race отмены и terminal event; перезапуск. Phase 1 использует тестовый subprocess с fixture events, интеграция приложения проводится после появления Worker.
+
+## Реализация для ревью Phase 1
+
+Кандидат v1.0 описан в [Core API and Worker Contracts](../../../02_ARCHITECTURE/API_CONTRACTS.md).
+Последовательность событий, `commit_started` и логические input/output references рассмотрены в
+[CCR-001/002](../../parallel/CONTRACT_CHANGE_REQUESTS.md). Production Worker, клиентские политики
+закрытия и долговечная публикация остаются за пределами проверок Phase 1.

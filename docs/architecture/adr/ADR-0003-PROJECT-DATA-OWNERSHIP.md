@@ -32,3 +32,7 @@ ADR-0001 фиксирует папку, `project.lspx`, SQLite Catalog и spatia
 ## Проверка корректности
 
 Schema и round-trip fixtures; Reference/Copy; missing/moved/checksum drift; Unicode, traversal, symlink/junction, drive-relative и UNC path; reopen после каждой fault-injection точки; две конкурирующие записи; повтор recovery; занятый каталог и нехватка диска; миграция и откат; расхождение manifest и SQLite identity/version. Проверки используют реальные синтетические GeoTIFF/GeoPackage и SQLite файлы в Phase 2.
+
+## Обязательный P1 gate перед Phase 2
+
+Ревью PR #1 выявило окно сбоя между заменой manifest и фиксацией записи в каталоге. До начала Phase 2 утвердить точную state machine и порядок долговечной записи. PREPARED intent должен переживать сбой до любой замены manifest. Утверждение включает ordering для staging, flush/commit PREPARED, замены manifest, публикации проекции и завершения/очистки записи. Для каждой границы предусмотрены fault-injection, проверка reopen и идемпотентное повторное восстановление, включая отказ во время самого recovery. Доказательство должно исключать необнаружимое расхождение manifest и каталога, а также повторную публикацию. Носитель журнала, поля, блокировка и политика восстановления остаются предметом OQ-25–28. Статус ADR остаётся Proposed. [ACR-003](../../parallel/CONTRACT_CHANGE_REQUESTS.md)

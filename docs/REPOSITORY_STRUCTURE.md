@@ -65,3 +65,11 @@ Lineament-Studio/
 ## Git и Pull Requests
 
 Ветки ведутся по действующему Git Workflow. Для Phase 0 используется `bootstrap/repository-foundation`. Для будущих фаз PR содержит requirement/ADR IDs, ограниченный scope, тестовые команды и evidence, а также применимые migration notes, UI-материалы, benchmark и список рисков. Предложение для branch protection — обязательные проверки и независимое review перед merge, запрет force-push, разрешение merge по правилам владельца. Выбор базы PR следует подтвердить при настройке веток. [Git Workflow](../11_DEVELOPMENT/GIT_WORKFLOW.md) · [OQ-32](../12_PROJECT_CONTROL/OPEN_QUESTIONS.md)
+
+### Phase 1 layout used by Core
+
+The Core candidate starts with flat `domain.py`, `application.py`, `diagnostics.py`, `lifecycle.py`
+and `wire.py` modules inside `src/lineament_core/`. Tests are grouped by boundary in `tests/`.
+The repository currently uses locked Hatchling, Ruff and pytest. The architecture and tooling table
+above remains a proposal for repository growth, including any dedicated static type checker.
+[Installed wheel and CI evidence](PHASE_1_REPORT.md) · [Workstream paths](parallel/WORKSTREAM_OWNERSHIP.md)
