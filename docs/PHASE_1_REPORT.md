@@ -169,3 +169,33 @@ passed Ruff lint and format checks, ran 65 tests, and retained
 [Ubuntu JUnit](https://github.com/NickBurk/Lineament-Studio/actions/runs/45946843853/artifacts/15175310600)
 and [Windows JUnit](https://github.com/NickBurk/Lineament-Studio/actions/runs/45946843853/artifacts/15174908121).
 Run `45943809996` remains evidence for LS-1-01 only.
+
+## Final Verification
+
+This section records the independent final verification of the Phase 1 code candidate before
+this report-only documentation commit.
+
+**Verified code HEAD:** `a8da0251c5e12adb4476d604078a51ebbf95693f`
+
+**Final pull-request Core CI:** [run 45946942516](https://github.com/NickBurk/Lineament-Studio/actions/runs/45946942516)
+
+The run was triggered by `pull_request`, completed with conclusion `success`, and tested the
+exact verified code HEAD above against base `bootstrap/repository-foundation`
+(`805c17ffebb94e6e69ac43c18bb376e0348b68e8`).
+
+| Runner | CPython | Tests | Wheel build and isolated installation | Ruff lint and format | JUnit evidence |
+|---|---|---:|---|---|---|
+| Ubuntu | 3.11.18 | 65 passed, 0 failed | Passed | Passed | [JUnit artifact 15175022648](https://github.com/NickBurk/Lineament-Studio/actions/runs/45946942516/artifacts/15175022648) |
+| Windows | 3.11.9 | 65 passed, 0 failed | Passed | Passed | [JUnit artifact 15174789559](https://github.com/NickBurk/Lineament-Studio/actions/runs/45946942516/artifacts/15174789559) |
+
+Both jobs collected and passed all 65 tests. Both built the wheel, installed it in an isolated
+environment, passed Ruff lint and format checks, and successfully uploaded their JUnit artifacts.
+The artifacts were confirmed present and unexpired when this report was updated.
+
+This evidence closes the final code verification record for the candidate at
+`a8da0251c5e12adb4476d604078a51ebbf95693f`. It does not represent CI for the documentation-only commit that adds this
+section. A fresh `pull_request` Core CI run on the resulting report-only HEAD is required and
+must pass on both Ubuntu and Windows before LS-1-04 is considered closed.
+
+This update is report-only: it records already-observed CI evidence and does not change source
+code, tests, API contracts, Wire Protocol, ADRs, dependencies, or architecture.
