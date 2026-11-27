@@ -1,0 +1,8 @@
+{"type":"started","protocol_version":"1.0","job_id":"11111111-1111-4111-8111-111111111111","sequence":1,"timestamp":"2026-11-27T06:00:00Z"}
+{"type":"stage_started","protocol_version":"1.0","job_id":"11111111-1111-4111-8111-111111111111","sequence":2,"timestamp":"2026-11-27T06:00:00Z","stage":"example"}
+{"type":"progress","protocol_version":"1.0","job_id":"11111111-1111-4111-8111-111111111111","sequence":3,"timestamp":"2026-11-27T06:00:00Z","percent":50}
+{"type":"warning","protocol_version":"1.0","job_id":"11111111-1111-4111-8111-111111111111","sequence":4,"timestamp":"2026-11-27T06:00:00Z","warning_code":"partial_coverage"}
+{"type":"stage_completed","protocol_version":"1.0","job_id":"11111111-1111-4111-8111-111111111111","sequence":5,"timestamp":"2026-11-27T06:00:00Z","stage":"example"}
+{"type":"commit_started","protocol_version":"1.0","job_id":"11111111-1111-4111-8111-111111111111","sequence":6,"timestamp":"2026-11-27T06:00:00Z"}
+{"type":"artifact_created","protocol_version":"1.0","job_id":"11111111-1111-4111-8111-111111111111","sequence":7,"timestamp":"2026-11-27T06:00:00Z","artifact":{"id":"44444444-4444-4444-8444-444444444444","kind":"summary","spatial":{"status":"known","crs":"EPSG:4326","horizontal_unit":"degree","vertical_unit":null}}}
+{"type":"completed","protocol_version":"1.0","job_id":"11111111-1111-4111-8111-111111111111","sequence":8,"timestamp":"2026-11-27T06:00:00Z","result":{"result_version":"1.0","job_id":"11111111-1111-4111-8111-111111111111","operation":"example.summary","algorithm_version":"1.0.0","artifacts":[{"id":"44444444-4444-4444-8444-444444444444","kind":"summary","spatial":{"status":"known","crs":"EPSG:4326","horizontal_unit":"degree","vertical_unit":null}}]}}
