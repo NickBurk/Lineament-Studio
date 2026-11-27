@@ -162,5 +162,10 @@ change from its original contents to a tampered representation. Regression cover
 rejection by `Job`, `is_json_value` and `ParameterType.STRING.accepts`, while ordinary Unicode
 strings remain accepted. The correction does not alter the JSON/JSONL wire shape or API version.
 
-The final verification run for this correction is recorded separately below after CI completes;
-run `45943809996` is evidence for LS-1-01 only and is not used as LS-1-02 evidence.
+The correction commit is `95a5ecb1ea80dd4a927d2fcd8bb803da2ab87535`.
+[Core CI run 45946843853](https://github.com/NickBurk/Lineament-Studio/actions/runs/45946843853)
+passed on Ubuntu and Windows CPython 3.11. Both jobs built and installed the wheel in isolation,
+passed Ruff lint and format checks, ran 65 tests, and retained
+[Ubuntu JUnit](https://github.com/NickBurk/Lineament-Studio/actions/runs/45946843853/artifacts/15175310600)
+and [Windows JUnit](https://github.com/NickBurk/Lineament-Studio/actions/runs/45946843853/artifacts/15174908121).
+Run `45943809996` remains evidence for LS-1-01 only.
