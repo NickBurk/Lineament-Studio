@@ -45,3 +45,74 @@ durable PREPARED intent before manifest replacement, recovery ordering with a st
 fault-injection coverage at each persistence boundary. OQ-24 still covers cross-process deduplication.
 OQ-30 retains the product scope and preprocessing priority conflict. No GIS, Qt or storage runtime
 is required by the Core wheel. [Open questions](../12_PROJECT_CONTROL/OPEN_QUESTIONS.md) · [Change requests](parallel/CONTRACT_CHANGE_REQUESTS.md)
+
+## Integration base
+
+The common candidate for future parallel tasks is
+`9b61abc99e6105325a67533905ca7a790aab7a4f` on `feature/phase-01-core-contracts`.
+It contains the complete Core, the test suite and the workstream charter. Later report-only
+commits record verification. Develop future work from that exact commit after the project owner
+authorizes the common base and assignments. Integration through a history-rewriting merge mode
+requires Agent01 to record the replacement SHA before any workstreams branch.
+[Phase 1 review](https://github.com/NickBurk/Lineament-Studio/pull/2)
+
+## Local verification
+
+Linux x86_64, CPython 3.11.18 and uv 0.13.9. The initial skeleton build and isolated wheel install
+passed before contract source files were added. The full wheel passed a second clean install
+and import of all five Core modules. Its package metadata declared zero runtime requirements.
+Hatchling is used at build time. Ruff and pytest are development tools. Versions and hashes
+are recorded in `uv.lock`.
+
+```sh
+uv python install 3.11
+uv lock --python 3.11
+uv sync --locked --python 3.11
+uv build --wheel --no-build-isolation
+uv run --locked python scripts/check_wheel.py
+uv run --locked ruff check .
+uv run --locked ruff format --check .
+uv run --locked pytest -ra --junitxml=core-junit.xml
+git diff --check 805c17f...HEAD
+```
+
+The local JUnit was written to the workspace scratch directory. The final local run reported
+47 passed, 0 failed, 0 skipped. Ruff lint and format passed. A repository check confirmed
+all 62 FR and 16 NFR traceability rows, catalogue priorities, and 61 resolvable relative
+links in the changed Markdown files before adding this evidence section.
+
+| Acceptance check | Actual evidence |
+|---|---|
+| AC-CORE-001 | Wheel installed offline into an isolated venv and imported outside the checkout |
+| AC-CORE-002 | UUID references, bounded UTF-8 JSONL and golden replay. Invalid UTF-8, repeated keys, missing sequences and wrong IDs are rejected |
+| AC-CORE-003 | Separate subprocess preflight and exact version selection. Unknown fields, unadvertised minor and different major versions are rejected |
+| AC-CORE-004 | Cancel twice, cancel vs. finalization, exit mismatch, subprocess crash, restart and 256 KiB stderr burst. Persistent recovery has its Phase 2 gate |
+| AC-CORE-005 | Exact operation versions, duplicate/unknown entries, validated defaults, invalid parameters and result kinds |
+| AC-CORE-006 | Unicode wire fixtures, fixed diagnostic messages and rejection of free-form diagnostic fields |
+
+## Changed files
+
+| Area | Files relative to repository root |
+|---|---|
+| Toolchain and CI | `.github/workflows/core.yml`, `.gitignore`, `pyproject.toml`, `uv.lock`, `scripts/check_wheel.py` |
+| Core package | `src/lineament_core/__init__.py`, `src/lineament_core/application.py`, `src/lineament_core/diagnostics.py`, `src/lineament_core/domain.py`, `src/lineament_core/lifecycle.py`, `src/lineament_core/wire.py` |
+| Tests and fixtures | `tests/conftest.py`, `tests/test_domain_application.py`, `tests/test_wire_lifecycle.py`, `tests/test_worker_exchange.py`, `tests/fixtures/job.jsonl`, `tests/fixtures/completed.jsonl`, `tests/fixtures/worker_probe.py` |
+| Architecture and Phase 1 | `02_ARCHITECTURE/API_CONTRACTS.md`, `docs/PHASE_1_CORE_CONTRACTS_PLAN.md`, `docs/PHASE_1_REPORT.md`, `docs/REPOSITORY_STRUCTURE.md`, `docs/architecture/adr/ADR-0002-IPC-AND-JOB-LIFECYCLE.md`, `docs/architecture/adr/ADR-0003-PROJECT-DATA-OWNERSHIP.md` |
+| Project control | `12_PROJECT_CONTROL/OPEN_QUESTIONS.md`, `12_PROJECT_CONTROL/REQUIREMENTS_TRACEABILITY.md` |
+| Four workstreams | `docs/parallel/WORKSTREAM_OWNERSHIP.md`, `docs/parallel/CONTRACT_CHANGE_PROCESS.md`, `docs/parallel/CONTRACT_CHANGE_REQUESTS.md`, `docs/parallel/INTEGRATION_WORKFLOW.md`, `docs/parallel/AGENT_HANDOFF_TEMPLATE.md` |
+
+## GitHub Actions evidence
+
+Core CI built the wheel, installed it in a clean environment without package-index access, passed
+Ruff and executed all 47 tests on each platform for the pinned common candidate.
+[Core CI run 45938866568](https://github.com/NickBurk/Lineament-Studio/actions/runs/45938866568)
+
+| Runner | CPython | Observed tests | Retained evidence |
+|---|---|---|---|
+| Ubuntu | 3.11.18 | 47 passed in 0.47 s | [JUnit](https://github.com/NickBurk/Lineament-Studio/actions/runs/45938866568/artifacts/15171697772) |
+| Windows | 3.11.9 | 47 passed in 0.65 s | [JUnit](https://github.com/NickBurk/Lineament-Studio/actions/runs/45938866568/artifacts/15172245635) |
+
+The first Windows run hit the 32,767-character Windows environment variable limit when pytest
+included the 64 KiB payload in `PYTEST_CURRENT_TEST`. The corrected test uses a short case ID and
+retains the same payload and assertions. Both environments passed on the next run.
+[First run and failure evidence](https://github.com/NickBurk/Lineament-Studio/actions/runs/45938769481)
