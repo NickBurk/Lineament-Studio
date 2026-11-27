@@ -64,3 +64,20 @@
 | Реальные GeoTIFF/GeoPackage и повторное открытие | FI-02–FI-05 и общий oracle |
 
 Ни один сценарий не объявлен пройденным. Для принятия gate нужны реальные команды/артефакты/результаты после отдельного утверждения storage architecture.
+
+## CHAT02 recovery consistency supplement
+
+All rows below are **planned**, not executed. For every row, record the actual SQLite journal_mode/synchronous, VFS and Windows/filesystem environment. Test process termination separately from power interruption in a disposable VM. “Negative acceptance” means the test fails if it observes a mixed state as normal, loses the only prior manifest, silently chooses conflicting authority, duplicates a result, or deletes evidence.
+
+| Fault point | Expected durable state | Process-crash test | Power-loss test | Recovery result and consistency | Artifact digest / repeat recovery | Negative acceptance |
+|---|---|---|---|---|---|---|
+| SQLite corruption before PREPARED | No intent; old manifest is sole valid entry point | Corrupt disposable DB, reopen | VM interruption during DB corruption is not a durability proof; separately test DB backup | Diagnostic/read-only; no automatic write | No new final artifacts; repeat gives same diagnostic | Fail if manifest is rewritten or lost DB history is synthesized |
+| SQLite corruption after PREPARED, before manifest replacement | PREPARED may be unreadable; old manifest expected | Corrupt DB after verified intent, kill/reopen | VM fault after intent commit; report whether DB remains readable | Fail closed; no automatic replacement without readable intent | Stages preserved; repeated open does not publish | Fail if target manifest appears without recoverable intent |
+| SQLite corruption after manifest replacement | Target manifest may coexist with unreadable DB | Corrupt DB after replacement, reopen | VM power fault after ReplaceFileW | Quarantine/manual repair; do not infer catalog commit | Keep old/target bytes, stage and finals; repeat preserves all | Fail if project appears consistent or files are deleted |
+| SQLite corruption after artifact promotion | Some final files may be orphaned | Corrupt DB after rename, reopen | Separate VM fault after promotion | Quarantine/manual repair | Verify artifact digests; no second publication | Fail if orphan auto-registered without proof or removed |
+| Manifest corruption with intact SQLite | DB may or may not contain valid PREPARED | Corrupt manifest before reopen | VM fault during manifest write/replacement | Restore only from validated durable target/old bytes; otherwise read-only repair | Verify restored digest; repeat converges | Fail if arbitrary catalog row is used to invent manifest fields |
+| Manifest and SQLite both corrupt | No trusted coordination state | Corrupt both disposable copies | VM power fault followed by deliberate dual corruption test | Unavailable/quarantine; manual backup path | Preserve spatial payloads and all candidate files | Fail if system claims automatic recovery or deletes data |
+| ReplaceFileW returns error | API outcome may be ambiguous | Inject error and inspect current/replacement/backup | VM interruption at same boundary | Classify only by exact old/target digests; retain PREPARED | Verify one known-good manifest; repeat same classification | Fail if delete-then-rename or blind retry occurs |
+| Lock owner process exits | OS releases handle lock, not lock-file path | Kill writer then bounded retry by second writer | Power loss naturally drops process/handle; still validate files on reopen | Second writer acquires then recovers before write | Same publication identity; no stale-lock deletion | Fail if lock file is deleted as unlock mechanism |
+
+For SQLite PREPARED, run this boundary suite separately for DELETE/FULL, DELETE/EXTRA, WAL/FULL and WAL/EXTRA. Record actual xSync/VFS behavior and hardware assumptions. A successful process-crash run does not count as power-loss evidence. No configuration passes by documentation alone.
