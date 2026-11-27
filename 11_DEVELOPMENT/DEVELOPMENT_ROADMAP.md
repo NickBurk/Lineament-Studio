@@ -3,7 +3,7 @@
 ## Принцип
 Сначала вертикальный рабочий сценарий и стабильное ядро, затем расширение функций. Не строить весь UI до проверки данных и вычислительных контрактов.
 
-## Фазы
+## Направления работ по порядку
 1. Repository Bootstrap & Architecture Baseline.
 2. Core Contracts & Domain Model.
 3. Data Engine & Project Storage.
@@ -30,4 +30,10 @@
 Полный Review, Independent Annotation, Dataset Builder, пользовательское ранжирование, Smart Workflow, OSM, QGIS, отчёты и упаковка.
 
 ## Нумерация
-Новая дорожная карта относится только к новому репозиторию. Никакого mapping старых веток/коммитов не выполняется.
+ID фаз 0–14 определяет [Phase Breakdown](PHASE_BREAKDOWN.md). Направления 1–14 выше
+соответствуют фазам 0–13. GEE входит в Phase 13. Reports & Export, Scientific Validation &
+Performance и Packaging & Release входят в Phase 14. Контрактные и научные проверки
+начинаются в фазах соответствующих компонентов.
+
+Состав приёмки P0/MVP и P1/v1.0, включая минимальный Desktop Bundle, уточняется по OQ-30.
+[Open Questions](../12_PROJECT_CONTROL/OPEN_QUESTIONS.md)

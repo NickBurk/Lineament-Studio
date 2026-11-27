@@ -1,6 +1,6 @@
 # Decision Register
 
-Дата базовой фиксации: 2026-11-27. Версия документации: 0.2.0.
+Дата базовой фиксации: 2026-11-27. Версия базовой документации: 0.2.1.
 
 ## Статусы
 - `USER_APPROVED` — явно подтверждено заказчиком.
@@ -70,12 +70,18 @@
 | DEC-A30 | Главный файл проекта — `project.lspx`, UTF-8 JSON manifest; `project.sqlite` — каталог | ADR-0001; schema/migration tests |
 | DEC-A31 | Skills Pack v1.0 встроен в `.agents/skills`, `AGENTS.md`, `docs/SKILL_ROUTING.md` и `docs/templates` | Проверить discovery в целевом coding agent |
 | DEC-A32 | Для межслойных/публичных архитектурных изменений требуется ADR | Проверять на PR |
+| DEC-A33 | Restricted Phase 2–3 development storage profile. Manifest owns source versions, SQLite owns results/receipts. WAL + FULL and PREPARED precede publication on local filesystems with one cooperating writer. | ARCHITECT_SELECTED. See [slice evidence](../docs/PHASE_2_3_VERTICAL_SLICE.md#task-ag01-08-development-verification). Power-loss and product storage profile remain open. |
+| DEC-A34 | Retain Rasterio 1.4.4 / NumPy 2.4.6 for the candidate development environment. | ARCHITECT_SELECTED. Windows candidate CI and standalone redistribution have separate acceptance gates. |
 
 ## OPEN / PROPOSED
-Точные версии QGIS LTR, GDAL, PROJ и зависимостей; финальные определения LoG zero-crossing и matching;
-эмпирическая калибровка LSM weights/radii; межрегиональные пороги ranking; поддерживаемые версии
-Windows; лицензии bundled packages; финальный список детекторов после benchmark; совместимость
-legacy project formats после аудита фактического репозитория.
+Технические вопросы, методы проверки и фазы закрытия перечислены в [Open Questions](OPEN_QUESTIONS.md).
+Возможность импорта пользовательских проектов из других форматов зависит от отдельного решения пользователя (OQ-17).
+
+| Предложение Phase 0 | Статус | Вопросы |
+|---|---|---|
+| Привязка JSON/JSONL и жизненный цикл задания | PROPOSED | OQ-21–24. [ADR-0002](../docs/architecture/adr/ADR-0002-IPC-AND-JOB-LIFECYCLE.md) |
+| Владение данными проекта и порядок публикации | PROPOSED | OQ-25–27. [ADR-0003](../docs/architecture/adr/ADR-0003-PROJECT-DATA-OWNERSHIP.md) |
+| Происхождение Windows GIS runtime | PROPOSED | OQ-03/12/13/28. [ADR-0004](../docs/architecture/adr/ADR-0004-WINDOWS-GIS-RUNTIME.md) |
 
 ## DEFERRED
 Local LLM в базовой поставке; Deep Learning; полноценный cloud detection backend в GEE;

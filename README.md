@@ -43,3 +43,7 @@ Lineament Studio предназначен для обнаружения и ан�
 
 Prepare the repository, verify Codex instructions and Skills discovery, establish the minimal
 developer workflow, and resolve architecture decisions before implementing application features.
+
+Материалы Phase 0 включают [отчёт аудита](docs/REPOSITORY_BOOTSTRAP_REPORT.md),
+[предлагаемую структуру](docs/REPOSITORY_STRUCTURE.md) и
+[план Core Contracts](docs/PHASE_1_CORE_CONTRACTS_PLAN.md).
