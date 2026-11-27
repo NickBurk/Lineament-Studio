@@ -21,7 +21,7 @@ The fault suite measures abrupt process termination. Device power-loss durabilit
 
 ## GIS candidate and limitations
 
-Rasterio 1.4.4 (BSD-3-Clause) provides a single GDAL/PROJ wheel stack with NumPy 2.4.6 (BSD-3-Clause). Native bundled components have their own notices and release review remains required. No second standalone GDAL, pyproj or Pyogrio wheel is installed. The runtime test inventories PROJ's database, available resources and drivers. It checks a known offline coordinate and a GeoPackage raster round-trip. Mounted resource paths and GDAL/PROJ/GEOS DLL provenance are sampled in Windows CI. Vector GeoPackage operations, QGIS coexistence, grid-dependent transforms and the standalone installer still need Windows evidence before closing OQ-03/OQ-28.
+Rasterio 1.4.4 (BSD-3-Clause) provides a single GDAL/PROJ wheel stack with NumPy 2.4.6 (BSD-3-Clause). Native bundled components have their own notices and release review remains required. No second standalone GDAL, pyproj or Pyogrio wheel is installed. The runtime test inventories PROJ's database, available resources and drivers. It checks a known offline coordinate and GeoPackage raster and vector round-trips. Resource paths and GDAL/PROJ/GEOS DLL provenance are sampled in Windows CI. QGIS coexistence, grid-dependent transforms and the standalone installer still need Windows evidence before closing OQ-03/OQ-28.
 
 ## PRE-001 method and validation
 

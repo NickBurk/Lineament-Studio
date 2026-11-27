@@ -94,3 +94,108 @@ def test_offline_runtime_inventory_and_geopackage(tmp_path):
                 )
             )
         )
+
+
+def test_vector_geopackage_with_same_gdal(tmp_path):
+    """Use the existing loaded GDAL, avoiding a second native stack."""
+    import ctypes as c
+
+    package = Path(rasterio.__file__).parent
+    libraries = [
+        p
+        for directory in (package / ".libs", package.parent / "rasterio.libs", package)
+        if directory.is_dir()
+        for p in directory.iterdir()
+        if "gdal" in p.name.lower() and (".so" in p.name or p.suffix == ".dll")
+    ]
+    if os.name == "nt" and not libraries:
+        loaded = subprocess.check_output(
+            [
+                "powershell",
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                f"(Get-Process -Id {os.getpid()}).Modules | Select-Object -ExpandProperty FileName",
+            ],
+            text=True,
+        ).splitlines()
+        libraries = [
+            Path(p)
+            for p in loaded
+            if "gdal" in Path(p).name.lower() and "site-packages" in p.lower()
+        ]
+    assert len(libraries) == 1, libraries
+    gdal = c.CDLL(str(libraries[0]))
+
+    def api(name, result, *args):
+        fn = getattr(gdal, name)
+        fn.restype, fn.argtypes = result, args
+        return fn
+
+    ptr, string, integer = c.c_void_p, c.c_char_p, c.c_int
+    open_dataset = api("GDALOpenEx", ptr, string, c.c_uint, ptr, ptr, ptr)
+    close_dataset = api("GDALClose", None, ptr)
+    options_new = api("GDALVectorTranslateOptionsNew", ptr, c.POINTER(string), ptr)
+    options_free = api("GDALVectorTranslateOptionsFree", None, ptr)
+    translate = api(
+        "GDALVectorTranslate",
+        ptr,
+        string,
+        ptr,
+        integer,
+        c.POINTER(ptr),
+        ptr,
+        c.POINTER(integer),
+    )
+    get_layer = api("GDALDatasetGetLayer", ptr, ptr, integer)
+    count = api("OGR_L_GetFeatureCount", c.c_longlong, ptr, integer)
+    geojson = tmp_path / "point.geojson"
+    geojson.write_text(
+        json.dumps(
+            {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "geometry": {"type": "Point", "coordinates": [12, 55]},
+                        "properties": {"label": "control"},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    output = tmp_path / "контроль.gpkg"
+    with rasterio.Env(PROJ_NETWORK="OFF"):
+        source = open_dataset(str(geojson).encode("utf-8"), 4, None, None, None)
+        assert source
+        opts = options_new((string * 4)(b"-f", b"GPKG", b"-overwrite", None), None)
+        try:
+            assert opts
+            failed = integer()
+            written = translate(
+                str(output).encode("utf-8"),
+                None,
+                1,
+                (ptr * 1)(source),
+                opts,
+                c.byref(failed),
+            )
+            assert written and not failed.value
+            close_dataset(written)
+        finally:
+            if opts:
+                options_free(opts)
+            close_dataset(source)
+        reopened = open_dataset(str(output).encode("utf-8"), 4, None, None, None)
+        assert reopened
+        try:
+            layer = get_layer(reopened, 0)
+            assert layer and count(layer, 1) == 1
+        finally:
+            close_dataset(reopened)
+    with closing(sqlite3.connect(output)) as db:
+        assert db.execute('SELECT label FROM "point"').fetchone() == ("control",)
+        assert db.execute(
+            "SELECT geometry_type_name,srs_id FROM gpkg_geometry_columns"
+        ).fetchone() == ("POINT", 4326)

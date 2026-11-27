@@ -41,7 +41,7 @@ jobs:
         run: uv run --locked pytest -ra --junitxml=core-junit.xml
       - name: GIS runtime and integration evidence
         run: |
-          uv run --locked pytest -ra -s tests/gis --junitxml=gis-junit.xml
+          uv run --locked pytest -ra tests/gis -o junit_logging=all --junitxml=gis-junit.xml
           uv run --locked pytest -ra tests/integration --junitxml=integration-junit.xml
       - name: Preserve test evidence
         if: always()
