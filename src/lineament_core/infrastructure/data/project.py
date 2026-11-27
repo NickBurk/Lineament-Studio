@@ -2,6 +2,7 @@
 
 from ..execution import check_cancelled, copy_stream, digest_file, notify
 
+import logging
 import json
 import os
 import shutil
@@ -315,7 +316,7 @@ class Project:
         operation = str(uuid4())
         stage = internal(self.root, f"cache/{operation}.stage")
         item = {"result": result, "relink": relink}
-        intent_started = False
+        intent_state = "NOT_STARTED"
         try:
             if source is not None:
                 if source.stat().st_size > shutil.disk_usage(self.root).free:
@@ -340,7 +341,7 @@ class Project:
             check_cancelled(cancelled)
             if before_intent:
                 before_intent()
-            intent_started = True
+            intent_state = "ATTEMPTED"
             with db:
                 db.execute(
                     "INSERT INTO pending VALUES(1,?,?,?,?)",
@@ -348,6 +349,7 @@ class Project:
                 )
                 self.checkpoint("before_prepared_commit")
                 check_cancelled(cancelled)
+            intent_state = "COMMITTED"
             self.checkpoint("prepared_committed")
             observed = db.execute(
                 "SELECT publication_id,before,after,payload FROM pending"
@@ -356,8 +358,31 @@ class Project:
                 raise ProjectError("Committed intent could not be verified")
             self._recover(db, before, before, *observed)
         except BaseException:
-            if not intent_started:
-                self._cleanup(operation)
+            if intent_state == "ATTEMPTED":
+                # A context-manager exception alone cannot establish rollback.
+                intent_state = "UNKNOWN"
+                try:
+                    if db.in_transaction:
+                        db.rollback()
+                    if (
+                        not db.in_transaction
+                        and db.execute(
+                            "SELECT 1 FROM pending WHERE publication_id=?", (operation,)
+                        ).fetchone()
+                        is None
+                    ):
+                        intent_state = "ROLLED_BACK"
+                except Exception:
+                    logging.getLogger(__name__).warning(
+                        "Prepared transaction outcome unknown; staging retained"
+                    )
+            if intent_state in ("NOT_STARTED", "ROLLED_BACK"):
+                try:
+                    self._cleanup(operation)
+                except Exception:
+                    logging.getLogger(__name__).warning(
+                        "Operation staging cleanup failed"
+                    )
             raise
 
     def snapshot(self):

@@ -415,6 +415,9 @@ def test_cancellation_publication_boundary(seeded, point, visible):
     state = Project.open(project.root).snapshot()
     assert len(state["results"]) == 1 + visible
     assert original in state["results"]
+    assert not list((project.root / "cache").glob("*.stage"))
+    with closing(sqlite3.connect(project.root / "project.sqlite")) as db:
+        assert db.execute("SELECT count(*) FROM pending").fetchone() == (0,)
 
 
 @pytest.mark.parametrize("fail_at", [0.5, 1.0])
@@ -489,3 +492,143 @@ def test_execution_cancellation_preserves_previous_results(
     assert Project.open(project.root).snapshot()["results"] == original
     with closing(sqlite3.connect(project.root / "project.sqlite")) as db:
         assert db.execute("SELECT count(*) FROM pending").fetchone() == (0,)
+
+
+def test_sqlite_failure_confirmed_rollback_cleans_stage(seeded):
+    project, _, key = seeded
+    _compute(project, key)
+    original = project.snapshot()["results"]
+
+    def fail(point):
+        if point == "before_prepared_commit":
+            raise sqlite3.OperationalError("injected transaction failure")
+
+    project.checkpoint = fail
+    with pytest.raises(sqlite3.OperationalError, match="injected"):
+        _compute(project, key)
+    assert not list((project.root / "cache").glob("*.stage"))
+    with closing(sqlite3.connect(project.root / "project.sqlite")) as db:
+        assert db.execute("SELECT count(*) FROM pending").fetchone() == (0,)
+    assert Project.open(project.root).snapshot()["results"] == original
+
+
+def test_repeated_prepared_cancellation_leaves_no_stages(seeded):
+    from lineament_core.science.hillshade import Cancelled
+
+    project, _, key = seeded
+    _compute(project, key)
+    original = project.snapshot()["results"]
+    for _ in range(4):
+        requested = False
+
+        def request(point):
+            nonlocal requested
+            if point == "before_prepared_commit":
+                requested = True
+
+        project.checkpoint = request
+        with pytest.raises(Cancelled):
+            _compute(project, key, cancelled=lambda: requested)
+        assert not list((project.root / "cache").glob("*.stage"))
+        assert Project.open(project.root).snapshot()["results"] == original
+
+
+def test_committed_intent_retains_stage_until_recovery(seeded):
+    project, _, key = seeded
+    _compute(project, key)
+    original = project.snapshot()["results"]
+    requested = False
+
+    def stop(point):
+        nonlocal requested
+        if point == "prepared_committed":
+            requested = True
+            assert len(list((project.root / "cache").glob("*.stage"))) == 1
+            with closing(sqlite3.connect(project.root / "project.sqlite")) as db:
+                assert db.execute("SELECT count(*) FROM pending").fetchone() == (1,)
+            raise RuntimeError("interrupt before recovery")
+
+    project.checkpoint = stop
+    with pytest.raises(RuntimeError, match="interrupt"):
+        _compute(project, key, cancelled=lambda: requested)
+    assert len(list((project.root / "cache").glob("*.stage"))) == 1
+    state = Project.open(project.root).snapshot()
+    assert len(state["results"]) == 2
+    assert original[0] in state["results"]
+    for result in state["results"]:
+        assert checksum(project.root / result["path"]) == result["checksum"]
+    assert Project.open(project.root).snapshot() == state
+    assert not list((project.root / "cache").glob("*.stage"))
+
+
+def test_unknown_commit_outcome_retains_stage(seeded, monkeypatch, caplog):
+    project, _, key = seeded
+    _compute(project, key)
+    original = project.snapshot()["results"]
+    real_connect = sqlite3.connect
+    armed = False
+    probe_failed = False
+
+    class UncertainConnection(sqlite3.Connection):
+        def __exit__(self, *args):
+            nonlocal armed
+            result = super().__exit__(*args)
+            if armed:
+                armed = False
+                raise sqlite3.OperationalError("lost commit acknowledgement")
+            return result
+
+        def execute(self, sql, *args, **kwargs):
+            nonlocal probe_failed
+            if sql.startswith("SELECT 1 FROM pending WHERE") and not probe_failed:
+                probe_failed = True
+                raise sqlite3.OperationalError("outcome probe unavailable")
+            return super().execute(sql, *args, **kwargs)
+
+    def connect(*args, **kwargs):
+        return real_connect(*args, **kwargs, factory=UncertainConnection)
+
+    def arm(point):
+        nonlocal armed
+        if point == "before_prepared_commit":
+            armed = True
+
+    monkeypatch.setattr(sqlite3, "connect", connect)
+    project.checkpoint = arm
+    with pytest.raises(sqlite3.OperationalError, match="lost commit"):
+        _compute(project, key)
+    assert probe_failed
+    assert len(list((project.root / "cache").glob("*.stage"))) == 1
+    assert "outcome unknown" in caplog.text
+    with closing(real_connect(project.root / "project.sqlite")) as db:
+        assert db.execute("SELECT count(*) FROM pending").fetchone() == (1,)
+    state = Project.open(project.root).snapshot()
+    assert len(state["results"]) == 2 and original[0] in state["results"]
+    assert Project.open(project.root).snapshot() == state
+    assert not list((project.root / "cache").glob("*.stage"))
+
+
+def test_cleanup_failure_preserves_cancellation(seeded, monkeypatch, caplog):
+    from lineament_core.science.hillshade import Cancelled
+
+    project, _, key = seeded
+    original_cleanup = project._cleanup
+    requested = False
+
+    def request(point):
+        nonlocal requested
+        if point == "before_prepared_commit":
+            requested = True
+
+    def cannot_cleanup(operation):
+        raise OSError("private cleanup detail")
+
+    project.checkpoint = request
+    monkeypatch.setattr(project, "_cleanup", cannot_cleanup)
+    with pytest.raises(Cancelled):
+        _compute(project, key, cancelled=lambda: requested)
+    assert len(list((project.root / "cache").glob("*.stage"))) == 1
+    assert "staging cleanup failed" in caplog.text
+    assert "private cleanup detail" not in caplog.text
+    assert not Project.open(project.root).snapshot()["results"]
+    monkeypatch.setattr(project, "_cleanup", original_cleanup)

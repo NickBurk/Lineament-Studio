@@ -6,7 +6,7 @@ are development evidence only. No product gate or ADR/OQ status is changed here.
 
 | Finding | Owner | Stage | Checkpoint | Current evidence/status |
 |---|---|---|---|---|
-| LS-AUD-001 | Agent01 | Hardening | Before baseline extension | pytest 9.0.3, Python >=3.10; lock updated; CI required |
+| LS-AUD-001 | Agent01 | Hardening | Before baseline extension | pytest 9.0.3, Python >=3.11,<3.12; lock updated; CI required |
 | LS-AUD-002 | Agent01 | Hardening | Before algorithms | Explicit historical allowlist 2.0.0/2.0.1; real previous-baseline project fixture; review required |
 | LS-AUD-003 | Agent01 | Hardening | Before algorithms | Offset-free gradient, independent plane oracle; review required |
 | LS-AUD-004 | Agent01 | Hardening | Before Worker integration | Cooperative copy/digest/preflight, last gate before SQLite commit; review required |
