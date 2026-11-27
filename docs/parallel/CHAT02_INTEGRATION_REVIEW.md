@@ -116,3 +116,91 @@ Related gates: OQ-21/22 need framing/version/error fixtures before production Wo
 | Map Canvas | Windowed viewport with bounded cache avoids full DEM load and UI stalls. Disposable prototype on named Windows hardware. | 1k–20k rasters, 1/5 GPKG layers, NoData/rotation, cold/warm/reopen repeats, p50/p95, UI/Worker RSS and handles. Stop on wrong CRS, unbounded resources or frozen UI. | Dataset hashes, timings, traces and prototype notes; no product canvas or accepted NFR. |
 
 **STAGE B1 COMPLETE — FINAL WORKSTREAM REVISIONS PENDING.** Stage B2 will recheck exact revised heads, ownership, both CI event types and cross-workstream fixtures after separate authorization. No merge, baseline publication or Phase 2/3 implementation follows from this report.
+
+## Stage B2 interim snapshot — 2026-11-27 (PR #4/#7 reviewed; PR #3 pending)
+
+This section supplements Stage A and Stage B1 without rewriting their historical snapshots. It is a partial Stage B2 review, not a final integration verdict. Stage B2 remains incomplete until Agent04 publishes a corrected PR #3 head and that exact head is independently reviewed.
+
+### 1. Remote review state and workspace limitation
+
+- `integration/phase-1-baseline` resolves to `eab8396dc358ccf888b5ade00e5a76553c1fc602`.
+- Existing `feature/agent01-chat02-integration-review` resolved to `eba6af6af6a6ea15149354b6e238ebbda1e8529c` before this report update. No new review branch was created.
+- The review runtime could not resolve `github.com` for a direct `git clone`/`git fetch`. The review therefore used the GitHub API to read the exact remote refs, PR metadata, complete paginated PR patches, baseline comparisons, document contents and workflow-run records. This restores the remote review context, not a local Git worktree. No local `git status` or `git diff --check` is claimed.
+- PR #4 and #7 patches were checked for their complete changed-file lists and added-line trailing whitespace. Both have zero added-line trailing-whitespace findings. Their baseline comparisons show no deletions and only the intended documentation files.
+
+### 2. Current remote PR and CI snapshot
+
+All four PRs are open and unmerged. Each listed CI run is a completed `pull_request` event on the exact listed HEAD.
+
+| PR / owner | Branch / HEAD | Base | Changed files | Core CI |
+|---|---|---|---:|---|
+| #3 Agent04 | `feature/agent04-desktop-ux-blueprint` / `904b3765c79a8206f2584701cfb27696270666e6` | `eab8396` | 3 | [45951723900 — success](https://github.com/NickBurk/Lineament-Studio/actions/runs/45951723900) |
+| #4 Agent02 | `feature/agent02-storage-gate` / `e6e02287ea52e60f2ff99da0d098573dde7cfee5` | `eab8396` | 2 | [45973170461 — success](https://github.com/NickBurk/Lineament-Studio/actions/runs/45973170461) |
+| #6 Agent01 | `feature/agent01-chat02-integration-review` / `eba6af6af6a6ea15149354b6e238ebbda1e8529c` before this update | `eab8396` | 1 | [45972385383 — success](https://github.com/NickBurk/Lineament-Studio/actions/runs/45972385383) |
+| #7 Agent03 | `feature/agent03-gis-runtime-gate` / `c0c69d36d52a03a8598c33e2ab314cf265191aa1` | `eab8396` | 2 | [45973222711 — success](https://github.com/NickBurk/Lineament-Studio/actions/runs/45973222711) |
+
+### 3. Agent02 — PR #4 documentary review
+
+Exact baseline comparison: 3 commits ahead, 0 behind; only:
+- `docs/data/PHASE_2_STORAGE_GATE_PROPOSAL.md` — 267 additions;
+- `docs/data/RECOVERY_FAULT_MATRIX.md` — 83 additions.
+
+No production code, Core API, Wire Protocol, ADR or OQ files changed. The added-line whitespace scan is clean.
+
+**Review result: DOCUMENTATION REVIEWED — CLARIFICATIONS REQUIRED; NOT AN IMPLEMENTATION APPROVAL.**
+
+Positive findings:
+- `PREPARED_COMMITTED` is distinguished from physical power-loss durability; `Verified durability` remains `NOT VERIFIED`.
+- DELETE/FULL, DELETE/EXTRA, WAL/FULL and WAL/EXTRA are compared without selecting a final profile.
+- FI-08 distinguishes the pre-commit and post-commit boundaries; the fault matrix is explicitly planned, not executed.
+- Recovery ordering, ReplaceFileW ambiguity, LockFileEx ownership, SQLite corruption and fail-closed behavior are addressed.
+- `job_id`, internal `publication_id` and `result_id` are distinct; external idempotency-key behavior is deferred.
+- OQ-24/25/26 remain Proposed and OQ-27 remains Open. ADR-0003 remains Proposed. Phase 2 is not authorized.
+
+Three clarification requests were submitted as a COMMENT review on exact commit `e6e02287ea52e60f2ff99da0d098573dde7cfee5` ([review 6090024004](https://github.com/NickBurk/Lineament-Studio/pull/4#pullrequestreview-6090024004)):
+1. §7's “same key / different digest => conflict” needs to be scoped to internal `publication_id` or deferred to OQ-24/CCR, because §S-02 says no external idempotency key exists in the current contract.
+2. First-manifest creation is described as same-volume rename, while the recovery table primarily assumes an old manifest digest. Add initial-project-creation interruption cases or explicitly scope them out.
+3. State that `result_id` is storage/catalog-owned and absent from current Core `JobResult` and Worker wire schema; describe its internal mapping to `job_id` and `ArtifactRef.id`. No Core API change is requested.
+
+These are documentation clarifications; they do not authorize code, schema, ADR or OQ changes.
+
+### 4. Agent03 — PR #7 documentary review
+
+Exact baseline comparison: 2 commits ahead, 0 behind; only:
+- `docs/science/GIS_RUNTIME_GATE_REPORT.md` — 133 additions;
+- `docs/science/PHASE_3_PREPROCESSING_TEST_PLAN.md` — 128 additions.
+
+No production code, dependencies, Core API, Wire Protocol, ADR or OQ files changed. The added-line whitespace scan is clean.
+
+**Review result: VALIDATION PLAN REVIEWED — SELF-REPORT PENDING; NOT A RUNTIME OR SCIENTIFIC VERIFICATION.**
+
+Positive findings:
+- The P0/P1 list matches baseline `03_ALGORITHMS/DEM_PROCESSING.md`: Hillshade, Multi-directional Hillshade, Gaussian smoothing and Slope are P0; Curvature, TPI, LRM and Median filtering are P1.
+- Gaussian, median and multi-directional hillshade have method-specific test oracles; DEM Preflight has explicit scenarios and permitted-continuation expectations.
+- Tiled/full-array equivalence, seams, NoData, rotated grids, dtype and resource evidence are addressed.
+- Numerical tolerances, formula choices and unspecified method conventions remain TBD rather than being invented.
+- GIS report explicitly says Windows runtime, DLL/data isolation, driver round-trip, QGIS coexistence and clean Windows bundle are NOT VERIFIED. It makes no runtime/dependency selection.
+- ADR-0004 remains Proposed; OQ-03 remains Open; OQ-28 remains Proposed.
+
+A COMMENT review was submitted on exact commit `c0c69d36d52a03a8598c33e2ab314cf265191aa1` ([review 6090024407](https://github.com/NickBurk/Lineament-Studio/pull/7#pullrequestreview-6090024407)). Agent03 was asked to provide a self-contained GIS Runtime workstream report naming the final HEAD, branch, owned files, actual commands/check results, exact CI, reused static evidence and all tests not run. The current handoff block names initial checkout `b0425dd...` but does not clearly identify `c0c69d3...` as the final reviewed HEAD. No Windows or algorithm verification is inferred from Core CI.
+
+### 5. Cross-workstream compatibility update
+
+| Boundary | Verified alignment | Remaining constraint |
+|---|---|---|
+| Core ↔ Storage | Baseline Core API uses UUID `job_id`; `JobResult` carries that ID and a collection of `ArtifactRef.id`. API Contracts require a new UUID for a computation retry. Storage proposal keeps `publication_id`/ `result_id` internal and says no wire change. | Current Core API has no `publication_id` or group-level `result_id`. Persistence adapter mapping must be explicit; OQ-24 remains Open. |
+| Core lifecycle ↔ Storage publication | Core `commit_started`/`COMMITTING` is the Worker execution lifecycle. Storage `PREPARED_COMMITTED` is a persistence/publication state, explicitly not a new Core lifecycle state. | Do not conflate Worker finalization/cancellation with durable storage commit. Recovery and publication still require implementation-time contract review and tests. |
+| Storage ↔ GIS | Storage validation plan names GeoTIFF/GeoPackage payload checks, digest, CRS, transform, dimensions and NoData. GIS test plan covers these data properties and reopen behavior. | No Windows GIS runtime or durable storage evidence exists. No runtime or SQLite profile selected. |
+| GIS ↔ Core | Preprocessing plan says Preflight expectations do not mandate new API fields; raise a Contract Change Request if the approved contract cannot express a case. | No Core/Wire changes are authorized. Scientific formulas and tolerances remain TBD where unspecified. |
+| Science ↔ requirements | P0/P1 method priorities match the baseline DEM Processing Specification. | Test design only. OQ-20 numerical tolerances and OQ-31 scientific release gates remain Open. |
+| Desktop ↔ Storage/GIS | No new evidence from Agent04; PR #3 remains at `904b376...`. | Desktop corrections and cross-workstream UX acceptance remain PENDING. |
+
+### 6. Stage B2 status and next gate
+
+- PR #4: exact HEAD reviewed; three documentation clarifications submitted; response pending.
+- PR #7: exact HEAD reviewed as a validation plan; corrected Agent03 self-report requested; response pending.
+- PR #3: **PENDING** at `904b3765c79a8206f2584701cfb27696270666e6`; no final Desktop acceptance.
+- PR #6: this report update is made on the existing review branch only.
+- Stage B2: **PARTIAL / INCOMPLETE**. Complete the Desktop review only after Agent04 publishes a corrected HEAD, then rerun exact-ref, full-diff, CI and compatibility checks.
+
+No merge, new integration baseline, new review branch, ADR/OQ status change, Core API/Wire Protocol change, Phase 2 implementation or Phase 3 implementation is authorized by this snapshot.
