@@ -1,0 +1,18 @@
+{
+  "product": "Lineament Studio",
+  "spec_version": "0.2.1",
+  "created": "2026-11-27",
+  "status": "clean_start_integrated_engineering_baseline",
+  "language": "ru",
+  "markdown_documents_including_manifest": 81,
+  "files_including_manifests": 82,
+  "embedded_skills": 11,
+  "embedded_templates": 4,
+  "skills_pack_source": "lineament_studio_skills_pack_v1",
+  "project_main_file": "project.lspx",
+  "project_manifest_format": "UTF-8 JSON",
+  "project_catalog": "project.sqlite",
+  "legacy_code_policy": "do_not_transfer_or_use_linia_app_code_or_git_history",
+  "repository_baseline": "new_empty_github_repository_Lineament-Studio",
+  "phase_0": "Repository Bootstrap & Architecture Baseline"
+}
