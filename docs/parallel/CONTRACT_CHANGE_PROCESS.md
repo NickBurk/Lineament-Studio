@@ -1,0 +1,8 @@
+# Contract change process
+
+1. If a conflict or shared contract change is identified, stop implementation of the affected behavior. Record an Architecture/Contract Change Request with an ID, owner, source passages and requirement IDs, affected consumers, and risk. Continue independent work within the assigned scope.
+2. Include options, compatibility and version impact, migration impact where applicable, and proposed positive and negative acceptance cases. Send the handoff to Agent01 for coordination. Agent01 collects review from each affected workstream. The project owner decides product requirements, contradictions and architecture decisions that require approval.
+3. Once approved, Agent01 owns the contract PR and updates the applicable ADR, Open Questions, traceability, examples and fixtures. For blocked downstream work, provide the exact new base SHA and affected API version before it resumes.
+4. Test the oldest supported and newest proposed version at the integration boundary. Preserve the prior major during the documented migration window if both versions are supported. An incompatible change raises the major. Compatible additive changes use an explicitly negotiated minor. Algorithm and result versions track their own behavior. Changes to storage format and persistence versions have independent gates.
+
+Requests may live in the contract change register or an authorized GitHub issue. A proposal can be evaluated in a reviewable spike when the candidate status and blocked downstream behavior are explicit. [Open questions](../../12_PROJECT_CONTROL/OPEN_QUESTIONS.md) · [Current requests](CONTRACT_CHANGE_REQUESTS.md)
