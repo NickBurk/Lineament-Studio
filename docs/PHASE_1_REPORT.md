@@ -48,16 +48,19 @@ is required by the Core wheel. [Open questions](../12_PROJECT_CONTROL/OPEN_QUEST
 
 ## Integration base
 
-Common integration baseline: **NOT YET PUBLISHED**.
+Common integration ref: **PUBLISHED** as `integration/phase-1-baseline`.
 
-The previous candidate `9b61abc99e6105325a67533905ca7a790aab7a4f` is historical and obsolete;
-it must not be used for downstream workstreams. PR #2 is awaiting final review and owner-authorized
-integration. Agent02, Agent03 and Agent04 must not create branches until Agent01 publishes the exact
-post-integration SHA and the project owner authorizes the assignments. After integration, Agent01
-will obtain the actual resulting GitHub SHA (including any squash/rebase result), verify that it
-contains LS-1-01 and LS-1-02, record it here and communicate that same immutable SHA to all three
-agents. A moving branch name is never a substitute for this baseline.
-[Phase 1 review](https://github.com/NickBurk/Lineament-Studio/pull/2)
+PR #2 was merged into `bootstrap/repository-foundation` with merge commit
+`eb024789c1043e3f85b6e31d24bdf6a2e417cf97`. The common ref was created from that exact
+post-integration commit. The report-only handoff update is being verified on the common ref;
+Agent01 will communicate the resulting immutable branch HEAD SHA to Agent02, Agent03 and Agent04
+after its Core CI succeeds. Every task must pin that exact SHA as its branch and PR base; a moving
+branch name is never a substitute for the SHA.
+
+The obsolete candidate `9b61abc99e6105325a67533905ca7a790aab7a4f` must not be used.
+PR #1 remains open against `main`; `main` has not been changed. PR #2 is merged.
+[PR #2](https://github.com/NickBurk/Lineament-Studio/pull/2) ·
+[Common integration ref](https://github.com/NickBurk/Lineament-Studio/tree/integration/phase-1-baseline)
 
 ## Local verification
 
@@ -192,10 +195,27 @@ Both jobs collected and passed all 65 tests. Both built the wheel, installed it 
 environment, passed Ruff lint and format checks, and successfully uploaded their JUnit artifacts.
 The artifacts were confirmed present and unexpired when this report was updated.
 
-This evidence closes the final code verification record for the candidate at
-`a8da0251c5e12adb4476d604078a51ebbf95693f`. It does not represent CI for the documentation-only commit that adds this
-section. A fresh `pull_request` Core CI run on the resulting report-only HEAD is required and
-must pass on both Ubuntu and Windows before LS-1-04 is considered closed.
+The report-only LS-1-04 commit `efc5efbc184c62f111aecfa0e5da4add82ecc49d` was verified on its
+exact HEAD by [pull_request Core CI run 45948154071](https://github.com/NickBurk/Lineament-Studio/actions/runs/45948154071).
+Ubuntu and Windows each passed all 65 tests, wheel build and isolated installation, Ruff lint and
+format checks, and JUnit upload. The retained artifacts are
+[Ubuntu JUnit 15175646388](https://github.com/NickBurk/Lineament-Studio/actions/runs/45948154071/artifacts/15175646388)
+and [Windows JUnit 15175771096](https://github.com/NickBurk/Lineament-Studio/actions/runs/45948154071/artifacts/15175771096).
+This closes LS-1-04.
 
-This update is report-only: it records already-observed CI evidence and does not change source
-code, tests, API contracts, Wire Protocol, ADRs, dependencies, or architecture.
+PR #2 was then merged as `eb024789c1043e3f85b6e31d24bdf6a2e417cf97`.
+The post-merge [push Core CI run 45948889908](https://github.com/NickBurk/Lineament-Studio/actions/runs/45948889908)
+passed on Ubuntu and Windows: 65 tests per platform, wheel build and isolated installation,
+Ruff lint and format, and JUnit upload. Evidence:
+[Ubuntu JUnit 15175582383](https://github.com/NickBurk/Lineament-Studio/actions/runs/45948889908/artifacts/15175582383)
+and [Windows JUnit 15175533620](https://github.com/NickBurk/Lineament-Studio/actions/runs/45948889908/artifacts/15175533620).
+
+The common integration ref `integration/phase-1-baseline` was created from that merge commit.
+The final immutable task base is the exact HEAD of that ref after this report-only handoff update
+and its successful Core CI; Agent01 records and communicates that SHA in each agent handoff.
+
+This report update is documentation-only. It does not change source code, tests, API contracts,
+Wire Protocol, ADR decisions, dependencies, or architecture. ADR-0003 remains Proposed and
+OQ-25–28 remain unresolved. Phase 2 implementation remains blocked until the owner approves the
+durable PREPARED/recovery state machine, persistence ordering, and fault-injection evidence.
+
