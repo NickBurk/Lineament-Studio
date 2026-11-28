@@ -10,16 +10,16 @@ registration. The earlier proposal was independently reviewed at d7d071c (PR #11
 review 6095370708); that review does not accept this subsequent documentation delta.
 
 Preparation base remains `f7a52f7dd5d96b89ccdd34bf1b820e66a3bd483a` on
-`integration/phase-2-3-baseline`. PR #10 remains OPEN/DRAFT, HEAD
-`e933c2535c760320f1dbc169f0a8db83582f14d2`. No integrated hardening merge SHA
-or `integration/phase-3-hardening-baseline` has been created. Owner's subsequent
+`integration/phase-2-3-baseline`. PR #10 was merged by Owner from HEAD
+`e933c2535c760320f1dbc169f0a8db83582f14d2`. The integration ref reached merge commit
+`d958322bdc95e51001a6d6d037d736c0a391a272`. Verification of this merge remains pending. Owner's subsequent
 manual GitHub Settings verification is separate evidence: no repository rulesets,
 no displayed classic protection rules, zero collaborators and Owner-only direct
 access. Screenshots were reported by Owner; Agent01 has not independently inspected
 the image files. HTTP 403 limits connector inspection and is not evidence of a
 GitHub merge block. Owner specifies manual CHAT02 review followed by Owner Merge;
 no new rules, collaborators or configuration changes are required. Slope still
-waits for the actual merge and successful exact-SHA Windows/Linux baseline CI.
+requires successful Ubuntu and Windows CI on the merge SHA and publication of the verified baseline.
 
 Current branch `feature/agent01-phase-03-scope-package` contains documentation only.
 Slope 1.0.0 is the first authorized future vertical slice, with frozen physical
@@ -243,12 +243,23 @@ using `A=[[a,b],[d,e]]`. For Horn 3×3 raw partials `p_raw,q_raw`, positive band
 scale s, vertical metres/unit v and horizontal metres/unit h:
 
 ```text
+# Raw elevations at pixel centres, from the top row down
+z1 z2 z3
+z4 z5 z6
+z7 z8 z9
+
+p_raw = ((z3-z1) + 2*(z6-z4) + (z9-z7)) / 8
+q_raw = ((z7-z1) + 2*(z8-z2) + (z9-z3)) / 8
 p_m = p_raw * s * v
 q_m = q_raw * s * v
 A_m = h * A
 g = inverse(transpose(A_m)) @ [p_m,q_m]
 slope_deg = atan(hypot(gx,gy)) * 180/pi
 ```
+
+Positive p points along increasing raster column (right), positive q along increasing
+raster row (down). The affine maps these axes to world coordinates, including the
+row sign on north-up grids. Applying another row sign flip would corrupt rotated grids.
 
 Constant band offset cancels before differencing; retain original offset/scale in
 provenance. Horizontal and vertical conversion are separate. Validate finite
@@ -591,7 +602,7 @@ all methods into one large commit.
 | Stage | Scope / IDs | Proposed modules and tests | Exit artifacts / acceptance | Risk and Owner prerequisite |
 |---|---|---|---|---|
 | 0 | Scope reconciliation; PRE-001/002/003, unregistered filters | This package; no production code | Option A selected, PRE-003 bundled, Gaussian/Median excluded, Slope engineering contract fixed; fresh documentation review pending | Remaining OQ-30/20/31 gates; no implicit FR closure |
-| 1 | Integrated hardening baseline and method contracts; NFR-REL-002, NFR-REPRO-001 | Existing storage/registry/provenance; historical/cancel suites | Exact Owner-published merged SHA, Windows/Linux CI, reviewed adapter/CCR proposal | PR #10 integration/governance pending; no algorithms on f7a52f7 |
+| 1 | Integrated hardening baseline and method contracts; NFR-REL-002, NFR-REPRO-001 | Existing storage/registry/provenance; historical/cancel suites | Exact Owner-published merged SHA, Windows/Linux CI, reviewed adapter/CCR proposal | Post-merge CI and baseline publication pending; no algorithms on f7a52f7 |
 | 2 | Slope first vertical slice if selected; PRE-003 contribution | science/slope candidate, existing GIS/storage validation, six test layers §7 | Real TIFF publication, fresh-process reopen, analytic errors, performance evidence | Units/exaggeration/output tolerance decisions; PRE-003 not fully satisfied |
 | 3 | Multidirectional vertical slice; PRE-002 | science/multidirectional candidate, registry/provenance dispatch; all layers | Versioned method, weighted oracle, publication/recovery and Windows evidence | Chosen method must distinguish GDAL formula from proposed weighted mean |
 | 4 | Gaussian vertical slice only if registered | science/gaussian candidate; normalized convolution and all layers | Kernel manifest, masked oracle, precision/runtime report, published derived DEM | Sigma/truncation/center/edge/output decisions; dependency approval if any |
@@ -755,10 +766,18 @@ retained as a governance risk; this is not automatic compliance with the earlier
 protection proposal. The current authorized process is independent CHAT02 review
 and Owner-controlled merge. Do not create rules, add collaborators or alter settings.
 
-PR #10 e933c25 is prepared for Owner Merge with exact-head CI and conflict preflight,
-subject to the documented independent acceptance/confirmation. PR #11's current
-updated HEAD needs separate documentation-focused CHAT02 review; d7d071c acceptance
-does not cover later deltas. No actual merge SHA exists yet. After Owner Merge,
-verify the actual integration ref, dispatch CI for that ref, confirm both platform
-jobs/JUnit against the merge SHA, then publish the integration hardening baseline.
-Only then begin Slope 1.0.0. No Slope implementation from f7a52f7 is authorized.
+CHAT01 exercises the authority delegated by Owner for DEC-A35 and the Slope
+engineering contract. CHAT02 supplies independent review of each submitted HEAD.
+Owner controls merge and scope changes outside the delegation. Product acceptance
+and broader numerical/performance thresholds remain subject to Owner decision.
+
+PR #10 was merged at `d958322bdc95e51001a6d6d037d736c0a391a272`.
+Verification requires the merge SHA, both CI jobs and their JUnit artifacts
+before publication of the hardening baseline. Review of this document at an
+earlier SHA covers only that revision.
+
+Automated Core CI records the wheel, lint and regression suites configured on
+the tested ref. Local scientific verification requires separate evidence of the
+fixture, reference calculation, units, measured error, environment and command.
+No local Slope experiment or benchmark was run for this documentation change.
+OQ-20 and OQ-31 remain OPEN.
