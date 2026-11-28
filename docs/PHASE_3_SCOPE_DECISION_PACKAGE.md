@@ -27,7 +27,7 @@ contract and analytic-plane tolerance below. Its registration/publication adapta
 needs a CCR and architecture review before code. Other method cards remain candidates;
 no Curvature/TPI/LRM definition or Gaussian/Median implementation is approved here.
 
-## 2. Current Implementation Audit
+## 2. Historical preparation and hardening comparison
 
 Audit method: source/test inspection, not new execution. No code tests or scientific
 benchmarks were run for this documentation task. Existing test references identify
@@ -44,9 +44,9 @@ real coverage; they do not imply a fresh PASS or full normative acceptance.
 | Gaussian smoothing, no FR ID | NOT_STARTED | NOT_STARTED | Previously DEM P0, now unregistered/out of current scope; no implementation found |
 | Median filtering, no FR ID | NOT_STARTED | NOT_STARTED | Previously DEM P1, now unregistered/out of current scope; no implementation found |
 
-This distinction corrects a potential baseline misunderstanding: **2.0.1 is present
-in PR #10, not in the permitted preparation base**. Future implementation must not
-start from this document branch's old executable code.
+The table compares original preparation f7a52f7 with PR #10. The current document
+branch includes merge d958322 and executable Hillshade 2.0.1. Publication of the
+verified hardening baseline awaits CI on that integration merge SHA.
 
 PRE-001 details inspected in source:
 
@@ -64,7 +64,7 @@ PRE-001 details inspected in source:
 | Coverage | Existing analytic/rotated/anisotropic/mask/tile fixtures and fresh-process project reopen; hardening adds large offset and historical project fixture |
 | Remaining gates | Representative terrain, chosen GDAL/QGIS encoding/method comparison, scientific acceptance OQ-20/OQ-31, large-raster performance |
 
-Real existing references at base:
+Implementation references included in the current branch:
 
 - [hillshade.py](../src/lineament_core/science/hillshade.py),
   [raster.py](../src/lineament_core/infrastructure/gis/raster.py),
@@ -76,8 +76,7 @@ Real existing references at base:
 - [test_result_provenance.py](../tests/data/test_result_provenance.py),
   [test_vertical_slice.py](../tests/integration/test_vertical_slice.py).
 
-Hardening-only references are pinned externally so this base does not imply those
-files/features are integrated:
+The following references pin the hardening candidate accepted into d958322:
 [remediation plan](https://github.com/NickBurk/Lineament-Studio/blob/e933c2535c760320f1dbc169f0a8db83582f14d2/docs/security/RELIABILITY_SECURITY_REMEDIATION_PLAN.md),
 [offset test](https://github.com/NickBurk/Lineament-Studio/blob/e933c2535c760320f1dbc169f0a8db83582f14d2/tests/science/test_offset_stability.py),
 [historical/cancellation tests](https://github.com/NickBurk/Lineament-Studio/blob/e933c2535c760320f1dbc169f0a8db83582f14d2/tests/data/test_result_provenance.py).
@@ -730,7 +729,7 @@ Repository documents read for this planning task:
   [Performance Requirements](../09_SCIENCE_AND_QA/PERFORMANCE_REQUIREMENTS.md),
   [Vertical slice method/evidence](PHASE_2_3_VERTICAL_SLICE.md),
   [Skill Routing](SKILL_ROUTING.md).
-- PR #10 hardening remediation plan pinned in §2; not assumed present at this base.
+- PR #10 hardening remediation plan pinned in §2 and included in d958322.
 
 Six Skills manually read and applied:
 
