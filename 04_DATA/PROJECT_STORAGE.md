@@ -99,3 +99,12 @@ Backup запускается вручную. UI показывает дату �
 Валидировать размер и структуру manifest и импортируемых файлов; запрещать path traversal;
 не выполнять небезопасную десериализацию; учитывать права доступа, занятые файлы, длинные
 Windows-пути, Unicode, нехватку диска и отключение носителя.
+
+## Cancellable execution and notification
+
+Snapshot/copy/digest/preflight and computations remain cancellable until the final
+SQLite pre-commit gate. Source identity is rechecked before that gate. After entry
+to committing, late cancellation cannot mask publication; reopen/recovery resolves
+an uncertain outcome before any retry. Progress callbacks are observers with fixed
+failure diagnostics; an ordinary callback exception does not cancel publication.
+This does not establish a production Worker or close OQ-24 or durability gates.

@@ -29,6 +29,13 @@ RASTER = (
     "vertical_unit",
 )
 PARAMETERS = frozenset(("azimuth", "altitude", "z_factor", "vertical_metres_per_unit"))
+HISTORICAL_HILLSHADE_VERSIONS = frozenset(("2.0.0", "2.0.1"))
+
+
+def executable_supported(algorithm, version):
+    return algorithm == "hillshade" and version == VERSION
+
+
 DEPENDENCIES = frozenset(("rasterio", "gdal", "proj", "numpy"))
 
 
@@ -61,7 +68,10 @@ def validate_provenance(record, *, source_id, output_checksum, bound_asset=None)
             or record["source_checksum"] != bound_asset["checksum"]
         ):
             raise ValueError("Source snapshot differs from declared source version")
-        if record["algorithm"] != "hillshade" or record["algorithm_version"] != VERSION:
+        if (
+            record["algorithm"] != "hillshade"
+            or record["algorithm_version"] not in HISTORICAL_HILLSHADE_VERSIONS
+        ):
             raise ValueError("Unsupported algorithm or version")
         params = record["parameters"]
         if (

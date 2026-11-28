@@ -119,3 +119,10 @@ Annotation Set содержит устойчивый ID, автора/идент
 пути не коммитятся в Git. Импортируемые manifests проверяются до использования.
 
 Unsafe serialization, including Python objects/pickle, is prohibited.
+
+## Hardening historical validation policy
+
+Schema 1 explicitly validates historical Hillshade 2.0.0 and 2.0.1. Executable
+support is checked independently; current execution uses 2.0.1. Unknown versions
+fail closed. Historical records, parameters, digests and artifacts are preserved.
+See [hardening evidence](../docs/security/RELIABILITY_SECURITY_REMEDIATION_PLAN.md).
