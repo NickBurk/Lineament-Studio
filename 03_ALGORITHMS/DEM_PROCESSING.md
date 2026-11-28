@@ -67,11 +67,10 @@ NoData mask; NaN/Inf; rotated transform; разные dtype и масштабы 
 
 ## 10. Slope 1.0.0 — authorized contract, integration prerequisite pending
 
-TASK-AG01-10 authorizes a Slope vertical slice only after verified governance,
-PR #10 integration and exact-head CI on the new published hardening baseline.
-No integrated hardening SHA exists at this documentation revision: current branch
-is based on `f7a52f7dd5d96b89ccdd34bf1b820e66a3bd483a`; PR #10 candidate is
-`e933c2535c760320f1dbc169f0a8db83582f14d2`, not an integrated baseline.
+Owner integrated PR #10 at `d958322bdc95e51001a6d6d037d736c0a391a272`.
+The hardening baseline requires successful Core CI and JUnit verification on Ubuntu
+and Windows for that merge SHA on the integration ref. Publish the verified baseline
+after those checks. Slope implementation also requires acceptance of the Phase 3 contract.
 
 Rasterio `Affine(a,b,c,d,e,f)` maps `(column,row)` through `A=[[a,b],[d,e]]`.
 Horn raw pixel derivatives `p_raw,q_raw` become `p_m=p_raw*s*v`, `q_m=q_raw*s*v`,
