@@ -51,3 +51,22 @@ developer workflow, and resolve architecture decisions before implementing appli
 Материалы Phase 0 включают [отчёт аудита](docs/REPOSITORY_BOOTSTRAP_REPORT.md),
 [предлагаемую структуру](docs/REPOSITORY_STRUCTURE.md) и
 [план Core Contracts](docs/PHASE_1_CORE_CONTRACTS_PLAN.md).
+
+### Core and Desktop development checks
+
+Use CPython 3.11. Core and GIS checks run with the locked default groups.
+
+```sh
+uv run --locked pytest --ignore=tests/desktop
+```
+
+Desktop presentation tests use the optional desktop group. The tested development
+pin is PySide6 6.10.2, superseding the earlier unverified 6.11.3 compatibility
+candidate for this component. Windows bundle validation remains pending.
+Linux requires libegl1 for Qt loading, including offscreen tests.
+
+```sh
+QT_QPA_PLATFORM=offscreen uv run --locked --group desktop pytest tests/desktop
+```
+
+On PowerShell set `$env:QT_QPA_PLATFORM="offscreen"` before the same uv command.
