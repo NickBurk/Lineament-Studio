@@ -2,6 +2,8 @@
 
 import math
 import shutil
+
+from ..execution import check_cancelled
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -102,10 +104,17 @@ def physical_samples(raw, scale, offset):
 
 
 def inspect_dem(
-    path, *, band=1, tile=512, memory_bytes=64 * 1024**2, vertical_unit=None
+    path,
+    *,
+    band=1,
+    tile=512,
+    memory_bytes=64 * 1024**2,
+    vertical_unit=None,
+    cancelled=lambda: False,
 ):
     import numpy as np
 
+    check_cancelled(cancelled)
     path = Path(path)
     with open_tiff(path) as src:
         if type(band) is not int or not 1 <= band <= src.count:
@@ -125,6 +134,7 @@ def inspect_dem(
         lo = raw_lo = math.inf
         hi = raw_hi = -math.inf
         for window in windows(src.width, src.height, tile):
+            check_cancelled(cancelled)
             data = read_dem_samples(src, band, window)
             finite = np.isfinite(data.data)
             nan += int(np.count_nonzero(np.isnan(data.data)))
@@ -138,6 +148,7 @@ def inspect_dem(
                 )
                 physical = physical_samples(data, scale, offset).compressed()
                 lo, hi = min(lo, float(physical.min())), max(hi, float(physical.max()))
+        check_cancelled(cancelled)
         crs = src.crs
         crs_state = (
             "absent"

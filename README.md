@@ -10,11 +10,15 @@ Lineament Studio предназначен для обнаружения и ан�
 
 ## Project status
 
-Новый репозиторий. Разработка начинается с нуля. Исходный код и Git history старого `linia-app`
-не переносятся и не используются.
+Phase 1 Core Contracts интегрирована. Restricted Phase 2–3 development vertical slice
+принята в `integration/phase-2-3-baseline` на `f7a52f7dd5d96b89ccdd34bf1b820e66a3bd483a`.
+Реализованы backend Project Storage и Horn Hillshade; GUI и Detection пока отсутствуют.
+PR #9 остаётся OPEN / DRAFT / NOT MERGED. Hardening проходит отдельное ревью.
 
-Текущая версия репозитория — документационная и архитектурная базовая линия. Наличие спецификаций
-не означает, что функции уже реализованы.
+Development acceptance не означает полную продуктовую приёмку Phase 2–3.
+Открыты power-loss durability, миграции/rollback, standalone Windows GIS Bundle,
+PROJ grids, QGIS coexistence, native licensing и научное сравнение. Phase 4 требует
+отдельного разрешения. ADR-0003/0004 и OQ сохраняют действующие статусы.
 
 ## Source of truth
 
@@ -37,7 +41,7 @@ Lineament Studio предназначен для обнаружения и ан�
 - [`docs/SKILL_ROUTING.md`](docs/SKILL_ROUTING.md) — выбор Skills для конкретной задачи.
 - [`docs/templates/`](docs/templates/) — ADR, requirements, QA и phase report templates.
 
-## First milestone
+## Historical first milestone
 
 **Phase 0 — Repository Bootstrap & Architecture Baseline.**
 

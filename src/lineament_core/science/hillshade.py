@@ -6,6 +6,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
+from lineament_core.infrastructure.execution import Cancelled, notify
 from lineament_core.infrastructure.gis.raster import (
     band_calibration,
     open_tiff,
@@ -14,11 +15,7 @@ from lineament_core.infrastructure.gis.raster import (
     windows,
 )
 
-VERSION = "2.0.0"
-
-
-class Cancelled(Exception):
-    """Processing stopped at a tile boundary."""
+VERSION = "2.0.1"
 
 
 @dataclass(frozen=True)
@@ -181,16 +178,16 @@ def run(
                         physical_samples(
                             read_dem_samples(src, band, clipped),
                             band_scale,
-                            band_offset,
+                            0.0,
                         )
                     )
                     dst.write(
                         shade(arr, src.transform, factor, light), 1, window=window
                     )
                     if index < count:
-                        progress(index / count)
+                        notify(progress, index / count)
             if cancelled():
                 raise Cancelled()
         # Publish only after the source handle closes and the sidecar check succeeds.
         os.link(staged, output)
-    progress(1.0)
+    notify(progress, 1.0)

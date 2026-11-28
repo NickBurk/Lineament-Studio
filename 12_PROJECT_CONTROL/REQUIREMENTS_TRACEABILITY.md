@@ -136,8 +136,9 @@ references are repository-root-relative paths; test evidence is listed separatel
 actual repository files; parametrized tests include all collected cases. Historical
 execution evidence: [Push CI 46027699055](https://github.com/NickBurk/Lineament-Studio/actions/runs/46027699055)
 and [PR CI 46027707459](https://github.com/NickBurk/Lineament-Studio/actions/runs/46027707459),
-each with Ubuntu/Windows JUnit artifacts for HEAD `23599407`. New corrective HEAD
-requires fresh CI before its evidence can be claimed. The CI run does not establish
+each with Ubuntu/Windows JUnit artifacts for HEAD `23599407`. Corrective HEAD
+`6bd83fa18dc11c30abc4b5f344ff0c6de04383f9` passed exact-head Ubuntu/Windows
+PR and Push CI; see the hardening evidence below. The CI run does not establish
 Windows standalone GIS bundle compatibility or product acceptance.
 
 | Requirement ID | Normative priority | Implemented scope | Implementation reference | Exact test ID or command | Evidence reference | Remaining scope | Status |
@@ -159,7 +160,7 @@ Windows standalone GIS bundle compatibility or product acceptance.
 | DATA-007 | P0 | Bounded window and halo processing | src/lineament_core/science/hillshade.py | tests/science/test_hillshade.py::test_analytic_oracle_and_tile_equivalence | Previous Push/PR CI JUnit | 20k × 20k performance/peak RAM | IN_PROGRESS |
 | DATA-008 | P0 | Band, dtype, transform, mask and nonfinite checks | src/lineament_core/infrastructure/gis/raster.py | tests/gis/test_raster.py::test_preflight | Previous Push/PR CI JUnit | Additional driver profiles | VERIFIED_IN_SUPPORTED_PROFILE |
 | DATA-009 | P0 | Absent/unknown/angular CRS classification | src/lineament_core/infrastructure/gis/raster.py | tests/gis/test_raster.py::test_crs_classification | Previous Push/PR CI JUnit | Additional CRS profiles | VERIFIED_IN_SUPPORTED_PROFILE |
-| PRE-001 | P0 | Calibrated Horn Hillshade 2.0.0 | src/lineament_core/science/hillshade.py | tests/science/test_hillshade.py::test_analytic_oracle_and_tile_equivalence | Previous Push/PR CI JUnit | Terrain/cross-engine validation | VERIFIED_IN_SUPPORTED_PROFILE |
+| PRE-001 | P0 | Calibrated Horn Hillshade 2.0.1 executable; 2.0.0 historical validation/fixture | src/lineament_core/science/hillshade.py | tests/science/test_hillshade.py::test_analytic_oracle_and_tile_equivalence | Previous Push/PR CI JUnit | Terrain/cross-engine validation | VERIFIED_IN_SUPPORTED_PROFILE |
 | PRE-002 | P1 | No multidirectional implementation | — | — | — | Method and OQ-30 decision | NOT_STARTED |
 | PRE-003 | P1 | No slope/curvature/TPI/LRM | — | — | — | Four algorithms and OQ-30 | NOT_STARTED |
 | NFR-REL-002 | — | Prior result survives crash/cancel in local profile | src/lineament_core/infrastructure/data/project.py | tests/data/test_result_provenance.py::test_result_process_death | Previous Push/PR CI JUnit | Worker/bundle tests | VERIFIED_IN_SUPPORTED_PROFILE |
@@ -174,3 +175,50 @@ Windows standalone GIS bundle compatibility or product acceptance.
 | NFR-OFF-001 | — | Local processing; offline candidate control transform is test evidence | src/lineament_core/infrastructure/data/project.py | tests/gis/test_runtime.py::test_offline_runtime_inventory_and_geopackage | Previous Push/PR CI JUnit | Network-disabled product E2E | IN_PROGRESS |
 | NFR-SEC-001 | — | Explicit provenance fields | src/lineament_core/infrastructure/data/provenance.py | tests/data/test_result_provenance.py::test_strict_provenance | Previous Push/PR CI JUnit | Full manifest/log secret scan | IN_PROGRESS |
 | NFR-SEC-002 | — | Reject unsupported manifests/sidecars | src/lineament_core/infrastructure/data/manifest.py; src/lineament_core/infrastructure/gis/raster.py | tests/data/test_project.py::test_unsupported_manifest_is_preserved | Previous Push/PR CI JUnit | Archive import validation | IN_PROGRESS |
+
+## Hardening contribution (product statuses unchanged)
+
+- NFR-REPRO-001: `src/lineament_core/infrastructure/data/provenance.py` historical allowlist;
+  `tests/data/test_result_provenance.py::test_real_historical_project_survives_executable_upgrade`.
+- NFR-REL-002: internal cancellation and observers in
+  `src/lineament_core/infrastructure/execution.py` and `src/lineament_core/infrastructure/data/project.py`;
+  `tests/data/test_result_provenance.py::test_cancellation_publication_boundary`,
+  `test_callback_failure_does_not_change_publication`; production Worker remains future scope.
+- NFR-REPRO-002 / PRE-001: `src/lineament_core/science/hillshade.py` offset-free derivatives;
+  `tests/science/test_offset_stability.py::test_large_offset_preserves_plane_gradient`.
+
+Exact-head CI evidence is attached to the hardening PR. These contributions do not
+promote any full normative requirement to VERIFIED or authorize new algorithms.
+
+### Independently accepted storage adapter hardening
+
+CHAT02 acceptance at `6bd83fa18dc11c30abc4b5f344ff0c6de04383f9` is recorded
+from CHAT01's TASK-AG01-09-DOC-01. LS-AUD-004 covers cooperative cancellation
+and the publication boundary within the storage adapter; production Worker remains
+a separate gate. LS-AUD-011 covers staging cleanup after confirmed rollback and
+retention after successful commit or uncertain outcome. Implementation:
+[src/lineament_core/infrastructure/data/project.py](../src/lineament_core/infrastructure/data/project.py).
+
+All six regression tests are in
+[tests/data/test_result_provenance.py](../tests/data/test_result_provenance.py):
+
+- `test_cancellation_publication_boundary`
+- `test_sqlite_failure_confirmed_rollback_cleans_stage`
+- `test_repeated_prepared_cancellation_leaves_no_stages`
+- `test_committed_intent_retains_stage_until_recovery`
+- `test_unknown_commit_outcome_retains_stage`
+- `test_cleanup_failure_preserves_cancellation`
+
+Exact-head evidence for `6bd83fa`:
+
+| Trigger | Ubuntu | Windows |
+|---|---|---|
+| [PR CI](https://github.com/NickBurk/Lineament-Studio/actions/runs/46060962293) | PASS; [JUnit](https://github.com/NickBurk/Lineament-Studio/actions/runs/46060962293/artifacts/15228094149) | PASS; [JUnit](https://github.com/NickBurk/Lineament-Studio/actions/runs/46060962293/artifacts/15229041869) |
+| [Push CI](https://github.com/NickBurk/Lineament-Studio/actions/runs/46060955062) | PASS; [JUnit](https://github.com/NickBurk/Lineament-Studio/actions/runs/46060955062/artifacts/15228751645) | PASS; [JUnit](https://github.com/NickBurk/Lineament-Studio/actions/runs/46060955062/artifacts/15228537177) |
+
+Per platform: **194 passed**, Data **82**, Science **34**, GIS **12**, Integration
+**1**. Zero failures, errors, skips and xfails. These counts include targeted reruns;
+they are not added to the full-suite count. Supported development profile only;
+product requirement statuses are unchanged. LS-AUD-006–008 remain OPEN and
+LS-AUD-009 remains NOT VERIFIED. No product security/release gate is closed.
+These CI results belong to `6bd83fa`, not automatically to later documentation commits.
