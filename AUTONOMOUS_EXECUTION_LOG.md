@@ -18,3 +18,7 @@ Next actions are authorized dispatch of the integration ref, verification of bot
 ## Hardening verification accepted
 
 CHAT01 authorized exact-SHA normal feature push verification in PR15 comments 7235636973 and 7235639006. Run 46119038958 succeeded for d958322 on Ubuntu and Windows. Every step passed. JUnit artifacts 15253031339 and 15252848340 each contain full 194, data 82, science 34, GIS 12 and integration 1 with zero failures/errors/skips. Published integration/phase-3-hardening-baseline at d958322bdc95e51001a6d6d037d736c0a391a272. PR11 merged as b2f76d70981097167415079ac2cbaa4f59ec19ac. PR12 is being synchronized and verified on the new base. PR14 Linux EGL dependency correction is published for CI and independent review.
+
+## Scope and cancellation integration
+
+PR12 independently re-reviewed at 5701ad8062f061e1c2cf39cb0fe9c0986970c1f0 against b2f76d7. Both platforms passed push46119348198 and PR46119353478. Merged as 5580098303f1388d8ee7376117e5eb726433a5d5. A normal feature verification ref points to this exact combined SHA to obtain post-merge CI. PR14 final review accepted presentation scope at 0aa4ec0c731e1e45784c7b27c3e966d29da030ef, platform CI pending. Core-only194 and Qt5 passed locally. CCR005 Slope preimplementation matrix at dbc9aae43d9a2e4d65138fc9b25dcdffbc47ca34 awaits architecture review.
