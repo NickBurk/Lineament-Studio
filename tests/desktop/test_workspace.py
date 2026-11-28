@@ -36,9 +36,15 @@ def test_disabled_until_controller_and_project_available(window):
     requested = QSignalSpy(window.new_requested)
     window.actions["new"].trigger()
     assert requested.count() == 1
+    opened = QSignalSpy(window.open_requested)
+    window.actions["open"].trigger()
+    assert opened.count() == 1
     assert not window.actions["import"].isEnabled()
     window.show_project(ProjectRef(uuid4()), "Рельеф", ())
     assert window.actions["import"].isEnabled()
+    imported = QSignalSpy(window.import_requested)
+    window.actions["import"].trigger()
+    assert imported.count() == 1
     assert "Рельеф" in window.windowTitle()
 
 
