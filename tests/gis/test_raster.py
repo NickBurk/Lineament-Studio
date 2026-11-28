@@ -151,3 +151,34 @@ def test_crs_classification(tmp_path, definition, state, unit):
     info = inspect_dem(path)
     assert info["crs_state"] == state
     assert info["horizontal_unit"] == unit
+
+
+def test_preflight_cancellation_between_windows(tmp_path, monkeypatch):
+    from lineament_core.infrastructure.execution import Cancelled
+    from lineament_core.infrastructure.gis import raster
+
+    path = tmp_path / "two-windows.tif"
+    with rasterio.open(
+        path,
+        "w",
+        driver="GTiff",
+        width=4,
+        height=2,
+        count=1,
+        dtype="uint8",
+        transform=Affine(2, 0, 500, 0, -2, 700),
+    ) as dataset:
+        dataset.write(np.arange(8, dtype="uint8").reshape(2, 4), 1)
+
+    reads = []
+    read_samples = raster.read_dem_samples
+
+    def record_read(src, band, window):
+        samples = read_samples(src, band, window)
+        reads.append(window)
+        return samples
+
+    monkeypatch.setattr(raster, "read_dem_samples", record_read)
+    with pytest.raises(Cancelled):
+        inspect_dem(path, tile=2, cancelled=lambda: bool(reads))
+    assert reads == [rasterio.windows.Window(0, 0, 2, 2)]
