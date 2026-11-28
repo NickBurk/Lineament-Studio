@@ -72,6 +72,7 @@
 | DEC-A32 | Для межслойных/публичных архитектурных изменений требуется ADR | Проверять на PR |
 | DEC-A33 | Restricted Phase 2–3 development storage profile. Manifest owns source versions, SQLite owns results/receipts. WAL + FULL and PREPARED precede publication on local filesystems with one cooperating writer. | ARCHITECT_SELECTED. See [slice evidence](../docs/PHASE_2_3_VERTICAL_SLICE.md#task-ag01-08-development-verification). Power-loss and product storage profile remain open. |
 | DEC-A34 | Retain Rasterio 1.4.4 / NumPy 2.4.6 for the candidate development environment. | ARCHITECT_SELECTED. Windows candidate CI and standalone redistribution have separate acceptance gates. |
+| DEC-A35 | Phase 3 Option A: FUNCTIONAL_REQUIREMENTS.md is normative for priorities. PRE-001 P0; PRE-002 P1; PRE-003 P1 remains bundled (Slope, Curvature, TPI, LRM). Gaussian/Median are unregistered candidates outside current implementation scope. | ARCHITECT_SELECTED under delegated Owner authorization in TASK-AG01-10 (2026-11-28). ACR-004 resolved only for PRE priority conflict; OQ-30 remains OPEN. Hardening integration and scientific gates remain separate. |
 
 ## OPEN / PROPOSED
 Технические вопросы, методы проверки и фазы закрытия перечислены в [Open Questions](OPEN_QUESTIONS.md).
