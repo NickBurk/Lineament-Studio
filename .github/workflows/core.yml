@@ -1,0 +1,16 @@
+name: Core CI
+
+# GitHub registers workflow_dispatch from the default branch. Select the
+# integration ref when dispatching to execute its full Core CI definition.
+on: workflow_dispatch
+
+permissions: {}
+
+jobs:
+  select-integration-ref:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require an integration branch with the Core CI definition
+        run: |
+          echo "::error::Run Core CI on the target integration branch."
+          exit 1
