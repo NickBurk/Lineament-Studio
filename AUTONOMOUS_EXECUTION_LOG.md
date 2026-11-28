@@ -14,3 +14,7 @@ Owner delegates implementation, reviewed merges and release publication subject 
 - Windows 10 distribution verification and V1 release acceptance remain pending.
 
 Next actions are authorized dispatch of the integration ref, verification of both platform jobs and JUnit, baseline publication, reviewed integration of PR 11/12, and Slope from ancestry containing hardening plus accepted contract. Independent Desktop and Worker work can progress while dispatch access remains blocked.
+
+## Hardening verification accepted
+
+CHAT01 authorized exact-SHA normal feature push verification in PR15 comments 7235636973 and 7235639006. Run 46119038958 succeeded for d958322 on Ubuntu and Windows. Every step passed. JUnit artifacts 15253031339 and 15252848340 each contain full 194, data 82, science 34, GIS 12 and integration 1 with zero failures/errors/skips. Published integration/phase-3-hardening-baseline at d958322bdc95e51001a6d6d037d736c0a391a272. PR11 merged as b2f76d70981097167415079ac2cbaa4f59ec19ac. PR12 is being synchronized and verified on the new base. PR14 Linux EGL dependency correction is published for CI and independent review.
