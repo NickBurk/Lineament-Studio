@@ -12,6 +12,9 @@ dependencies = []
 [dependency-groups]
 gis = ["rasterio==1.4.4", "numpy==2.4.6"]
 dev = ["hatchling==1.29.0", "pytest==9.0.3", "ruff==0.15.14"]
+desktop = [
+    "pyside6==6.10.2",
+]
 
 [tool.uv]
 default-groups = ["dev", "gis"]
@@ -21,6 +24,7 @@ packages = ["src/lineament_core"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]
 addopts = "--strict-markers --import-mode=importlib"
 
 [tool.ruff]
