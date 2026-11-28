@@ -190,6 +190,10 @@ revision. PRE-003 remains NOT_STARTED in this preparation base; after actual Slo
 implementation it must be IN_PROGRESS until Curvature/TPI/LRM and their gates pass.
 PRE-002 remains NOT_STARTED. OQ-14, OQ-20 and OQ-31 remain OPEN.
 
-No exact integrated hardening baseline is available while LS-AUD-009 access remains
-blocked. PR #10 candidate e933c25 is not a substitute for its future merge SHA.
+No exact integrated hardening baseline is available before Owner Merge and post-merge
+verification. Owner's manual Settings evidence supersedes the earlier interpretation
+of 403 as an integration gate: no rulesets, no displayed classic protection rules,
+zero collaborators and Owner-only direct access. HTTP 403 is an inspection limitation.
+Manual independent CHAT02 review and Owner Merge are the authorized governance process;
+no new rules or collaborators are to be created. Automatic enforcement remains a risk. PR #10 candidate e933c25 is not a substitute for its future merge SHA.
 No implementation is permitted from the old preparation base f7a52f7.

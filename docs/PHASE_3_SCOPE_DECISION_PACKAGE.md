@@ -12,11 +12,14 @@ review 6095370708); that review does not accept this subsequent documentation de
 Preparation base remains `f7a52f7dd5d96b89ccdd34bf1b820e66a3bd483a` on
 `integration/phase-2-3-baseline`. PR #10 remains OPEN/DRAFT, HEAD
 `e933c2535c760320f1dbc169f0a8db83582f14d2`. No integrated hardening merge SHA
-or `integration/phase-3-hardening-baseline` has been created. LS-AUD-009 detailed
-protection reads still return 403. Under Stage A authorization, only documentation
-continues; merge and Slope production implementation are blocked until governance
-is confirmed and the exact integrated baseline passes CI. No renewed Owner
-permission is required for the already authorized actions, but their gates remain.
+or `integration/phase-3-hardening-baseline` has been created. Owner's subsequent
+manual GitHub Settings verification is separate evidence: no repository rulesets,
+no displayed classic protection rules, zero collaborators and Owner-only direct
+access. Screenshots were reported by Owner; Agent01 has not independently inspected
+the image files. HTTP 403 limits connector inspection and is not evidence of a
+GitHub merge block. Owner specifies manual CHAT02 review followed by Owner Merge;
+no new rules, collaborators or configuration changes are required. Slope still
+waits for the actual merge and successful exact-SHA Windows/Linux baseline CI.
 
 Current branch `feature/agent01-phase-03-scope-package` contains documentation only.
 Slope 1.0.0 is the first authorized future vertical slice, with frozen physical
@@ -744,11 +747,18 @@ has been represented as completed in this documentation task.
 
 ### TASK-AG01-10 execution state
 
-Stage A: LS-AUD-009 remains PARTIALLY VERIFIED / unresolved; both detailed protection
-GET requests return 403. No administrative configuration changed. Stage B merge,
-post-merge CI and publication of `integration/phase-3-hardening-baseline` are BLOCKED.
-There is no honest exact integrated SHA/link to insert yet; PR #10 e933c25 is only
-the candidate. Stage C documentation decision delta is submitted for a fresh CHAT02
-review; prior d7d071c review does not cover this delta. Stages D/E Slope code, tests,
-benchmarks and platform evidence are NOT STARTED. No Slope PR or fictitious benchmark
-result is created. Resume from the exact verified integrated hardening commit only.
+Stage A interpretation is superseded by Owner's manual Settings evidence: no
+repository rulesets or displayed classic protection rules; zero collaborators,
+Owner-only direct access. API 403 is an inspection limitation, not a merge blocker.
+Automatic review/check enforcement is absent according to Owner's evidence and is
+retained as a governance risk; this is not automatic compliance with the earlier
+protection proposal. The current authorized process is independent CHAT02 review
+and Owner-controlled merge. Do not create rules, add collaborators or alter settings.
+
+PR #10 e933c25 is prepared for Owner Merge with exact-head CI and conflict preflight,
+subject to the documented independent acceptance/confirmation. PR #11's current
+updated HEAD needs separate documentation-focused CHAT02 review; d7d071c acceptance
+does not cover later deltas. No actual merge SHA exists yet. After Owner Merge,
+verify the actual integration ref, dispatch CI for that ref, confirm both platform
+jobs/JUnit against the merge SHA, then publish the integration hardening baseline.
+Only then begin Slope 1.0.0. No Slope implementation from f7a52f7 is authorized.
