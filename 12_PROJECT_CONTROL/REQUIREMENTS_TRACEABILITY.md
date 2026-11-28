@@ -93,7 +93,7 @@ Implementation/test evidence заполняются только по факти
 `BUILD-001` в каталоге требований отсутствует. Вопрос регистрации релизных требований — OQ-33.
 
 FR priorities come from the [functional requirements catalogue](../01_REQUIREMENTS/FUNCTIONAL_REQUIREMENTS.md).
-The preprocessing discrepancy remains recorded in ACR-004 and OQ-30.
+The PRE priority discrepancy is resolved by DEC-A35 / ACR-004 (Option A); broader OQ-30 remains OPEN.
 [Change requests](../docs/parallel/CONTRACT_CHANGE_REQUESTS.md)
 
 ## Phase 1 evidence
@@ -161,8 +161,8 @@ Windows standalone GIS bundle compatibility or product acceptance.
 | DATA-008 | P0 | Band, dtype, transform, mask and nonfinite checks | src/lineament_core/infrastructure/gis/raster.py | tests/gis/test_raster.py::test_preflight | Previous Push/PR CI JUnit | Additional driver profiles | VERIFIED_IN_SUPPORTED_PROFILE |
 | DATA-009 | P0 | Absent/unknown/angular CRS classification | src/lineament_core/infrastructure/gis/raster.py | tests/gis/test_raster.py::test_crs_classification | Previous Push/PR CI JUnit | Additional CRS profiles | VERIFIED_IN_SUPPORTED_PROFILE |
 | PRE-001 | P0 | Calibrated Horn Hillshade 2.0.1 executable; 2.0.0 historical validation/fixture | src/lineament_core/science/hillshade.py | tests/science/test_hillshade.py::test_analytic_oracle_and_tile_equivalence | Previous Push/PR CI JUnit | Terrain/cross-engine validation | VERIFIED_IN_SUPPORTED_PROFILE |
-| PRE-002 | P1 | No multidirectional implementation | — | — | — | Method and OQ-30 decision | NOT_STARTED |
-| PRE-003 | P1 | No slope/curvature/TPI/LRM | — | — | — | Four algorithms and OQ-30 | NOT_STARTED |
+| PRE-002 | P1 | No multidirectional implementation | — | — | — | Separate authorized multidirectional implementation | NOT_STARTED |
+| PRE-003 | P1 | No slope/curvature/TPI/LRM | — | — | — | Slope gated on hardening integration; Curvature/TPI/LRM still pending | NOT_STARTED |
 | NFR-REL-002 | — | Prior result survives crash/cancel in local profile | src/lineament_core/infrastructure/data/project.py | tests/data/test_result_provenance.py::test_result_process_death | Previous Push/PR CI JUnit | Worker/bundle tests | VERIFIED_IN_SUPPORTED_PROFILE |
 | NFR-DATA-001 | — | Local manifest/catalog recovery | src/lineament_core/infrastructure/data/project.py | tests/data/test_project.py::test_process_death_and_repeated_reopen | Previous Push/PR CI JUnit | Power-loss durability | VERIFIED_IN_SUPPORTED_PROFILE |
 | NFR-DATA-002 | — | Contained Copy paths and link denial | src/lineament_core/infrastructure/data/manifest.py | tests/data/test_project.py::test_unsafe_internal_paths | Previous Push/PR CI JUnit | Other filesystem profiles | VERIFIED_IN_SUPPORTED_PROFILE |
@@ -222,3 +222,25 @@ they are not added to the full-suite count. Supported development profile only;
 product requirement statuses are unchanged. LS-AUD-006–008 remain OPEN and
 LS-AUD-009 remains NOT VERIFIED. No product security/release gate is closed.
 These CI results belong to `6bd83fa`, not automatically to later documentation commits.
+
+## TASK-AG01-10 authorized Phase 3 scope
+
+DEC-A35 selects Option A: PRE-001 P0, PRE-002 P1, PRE-003 P1 bundled. No FR ID or
+priority changed. ACR-004's PRE priority conflict is resolved; OQ-30 remains OPEN
+for remaining MVP/Balanced/OSM/release-minimum questions. Gaussian/Median remain
+unregistered candidates outside current implementation scope.
+
+Slope 1.0.0 contract and proposed test references are in
+[scope package](../docs/PHASE_3_SCOPE_DECISION_PACKAGE.md). Analytical plane tolerance
+<=1e-5 degrees is an authorized engineering fixture threshold, not full scientific
+acceptance. No new scientific tests or benchmarks have run in this documentation
+revision. PRE-003 remains NOT_STARTED in this preparation base; after actual Slope
+implementation it must be IN_PROGRESS until Curvature/TPI/LRM and their gates pass.
+PRE-002 remains NOT_STARTED. OQ-14, OQ-20 and OQ-31 remain OPEN.
+
+Owner merged PR #10 at `d958322bdc95e51001a6d6d037d736c0a391a272`. Publication of the verified baseline awaits post-merge CI. Owner's manual Settings evidence supersedes the earlier interpretation
+of 403 as an integration gate: no rulesets, no displayed classic protection rules,
+zero collaborators and Owner-only direct access. HTTP 403 is an inspection limitation.
+Manual independent CHAT02 review and Owner Merge are the authorized governance process;
+no new rules or collaborators are to be created. Automatic enforcement remains a risk.
+No implementation is permitted from the old preparation base f7a52f7.
