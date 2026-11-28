@@ -22,8 +22,18 @@
 производной копии с явным действием пользователя и записью provenance.
 
 ## 3. Производные
-P0: Hillshade, Multi-directional Hillshade, Gaussian smoothing, Slope.
-P1: Curvature, TPI, Local Relief Model (LRM), Median filtering.
+Нормативный источник приоритетов — `01_REQUIREMENTS/FUNCTIONAL_REQUIREMENTS.md`
+(DEC-A35, Option A, TASK-AG01-10):
+
+- PRE-001 — P0: Hillshade.
+- PRE-002 — P1: Multi-directional Hillshade.
+- PRE-003 — P1: Slope, Curvature, TPI, Local Relief Model (LRM), единое требование.
+  Реализация одного Slope не закрывает PRE-003.
+
+Gaussian smoothing и Median filtering — незарегистрированные кандидаты, не входят
+в текущий разрешённый объём реализации. Их прежние профильные метки P0/P1 не
+являются зарегистрированными FR-приоритетами. Нужны отдельная регистрация и criteria.
+OQ-30 остаётся OPEN по остальным вопросам MVP/Balanced/OSM/release scope.
 
 ## 4. Единицы и CRS
 Расстояния рассчитываются в подходящих линейных единицах или геодезически. Метрические
@@ -54,3 +64,35 @@ NoData mask; NaN/Inf; rotated transform; разные dtype и масштабы 
 Для численных методов заранее определить математическое ожидание, допуск, поведение на
 вырожденных входах, среднюю/максимальную ошибку и локальные артефакты. Визуально правдоподобный
 результат не считается доказательством математической корректности.
+
+## 10. Slope 1.0.0 — authorized contract, integration prerequisite pending
+
+TASK-AG01-10 authorizes a Slope vertical slice only after verified governance,
+PR #10 integration and exact-head CI on the new published hardening baseline.
+No integrated hardening SHA exists at this documentation revision: current branch
+is based on `f7a52f7dd5d96b89ccdd34bf1b820e66a3bd483a`; PR #10 candidate is
+`e933c2535c760320f1dbc169f0a8db83582f14d2`, not an integrated baseline.
+
+Rasterio `Affine(a,b,c,d,e,f)` maps `(column,row)` through `A=[[a,b],[d,e]]`.
+Horn raw pixel derivatives `p_raw,q_raw` become `p_m=p_raw*s*v`, `q_m=q_raw*s*v`,
+where s is band scale, v is vertical metres/unit. With h horizontal metres/unit,
+`A_m=h*A`, `g=inverse(transpose(A_m))@[p_m,q_m]` and
+`slope_deg=degrees(atan(hypot(gx,gy)))`. Constant band offset cancels before
+arithmetic but remains in provenance. No vertical exaggeration in Slope v1.0.0.
+Reject unknown/incompatible units, missing/unknown/geographic CRS and singular
+or nonfinite affine. No implicit reprojection or CRS assignment.
+
+Output: algorithm `slope`, version `1.0.0`, Horn 3×3, degrees, single-band float32
+GeoTIFF, NoData -1 and internal validity mask; input CRS/affine unchanged. Full
+stencil with invalid/nonfinite data or outside-raster neighbors yields invalid output.
+Initial tile 1024×1024, halo 1, CPU-only, bounded memory. Worker 6 GB is a starting
+profile, not a proven guarantee. Only existing NumPy/Rasterio dependencies allowed.
+
+Analytical-plane engineering tolerance: maximum absolute error <=1e-5 degrees;
+no relative error near zero. This fixture criterion does not close OQ-20/OQ-31.
+Benchmark sizes 1k/5k/10k/20k squared require runtime, peak RSS, temporary disk and
+cancellation measurements. No benchmark results are asserted by this contract.
+
+Strict provenance and Project Storage publication are mandatory. Algorithm-specific
+adapter/provenance changes require a proposed CCR and architecture review before
+implementation; no manifest/catalog/public Wire contract change is approved here.

@@ -93,7 +93,7 @@ Implementation/test evidence заполняются только по факти
 `BUILD-001` в каталоге требований отсутствует. Вопрос регистрации релизных требований — OQ-33.
 
 FR priorities come from the [functional requirements catalogue](../01_REQUIREMENTS/FUNCTIONAL_REQUIREMENTS.md).
-The preprocessing discrepancy remains recorded in ACR-004 and OQ-30.
+The PRE priority discrepancy is resolved by DEC-A35 / ACR-004 (Option A); broader OQ-30 remains OPEN.
 [Change requests](../docs/parallel/CONTRACT_CHANGE_REQUESTS.md)
 
 ## Phase 1 evidence
@@ -160,8 +160,8 @@ Windows standalone GIS bundle compatibility or product acceptance.
 | DATA-008 | P0 | Band, dtype, transform, mask and nonfinite checks | src/lineament_core/infrastructure/gis/raster.py | tests/gis/test_raster.py::test_preflight | Previous Push/PR CI JUnit | Additional driver profiles | VERIFIED_IN_SUPPORTED_PROFILE |
 | DATA-009 | P0 | Absent/unknown/angular CRS classification | src/lineament_core/infrastructure/gis/raster.py | tests/gis/test_raster.py::test_crs_classification | Previous Push/PR CI JUnit | Additional CRS profiles | VERIFIED_IN_SUPPORTED_PROFILE |
 | PRE-001 | P0 | Calibrated Horn Hillshade 2.0.0 | src/lineament_core/science/hillshade.py | tests/science/test_hillshade.py::test_analytic_oracle_and_tile_equivalence | Previous Push/PR CI JUnit | Terrain/cross-engine validation | VERIFIED_IN_SUPPORTED_PROFILE |
-| PRE-002 | P1 | No multidirectional implementation | — | — | — | Method and OQ-30 decision | NOT_STARTED |
-| PRE-003 | P1 | No slope/curvature/TPI/LRM | — | — | — | Four algorithms and OQ-30 | NOT_STARTED |
+| PRE-002 | P1 | No multidirectional implementation | — | — | — | Separate authorized multidirectional implementation | NOT_STARTED |
+| PRE-003 | P1 | No slope/curvature/TPI/LRM | — | — | — | Slope gated on hardening integration; Curvature/TPI/LRM still pending | NOT_STARTED |
 | NFR-REL-002 | — | Prior result survives crash/cancel in local profile | src/lineament_core/infrastructure/data/project.py | tests/data/test_result_provenance.py::test_result_process_death | Previous Push/PR CI JUnit | Worker/bundle tests | VERIFIED_IN_SUPPORTED_PROFILE |
 | NFR-DATA-001 | — | Local manifest/catalog recovery | src/lineament_core/infrastructure/data/project.py | tests/data/test_project.py::test_process_death_and_repeated_reopen | Previous Push/PR CI JUnit | Power-loss durability | VERIFIED_IN_SUPPORTED_PROFILE |
 | NFR-DATA-002 | — | Contained Copy paths and link denial | src/lineament_core/infrastructure/data/manifest.py | tests/data/test_project.py::test_unsafe_internal_paths | Previous Push/PR CI JUnit | Other filesystem profiles | VERIFIED_IN_SUPPORTED_PROFILE |
@@ -174,3 +174,22 @@ Windows standalone GIS bundle compatibility or product acceptance.
 | NFR-OFF-001 | — | Local processing; offline candidate control transform is test evidence | src/lineament_core/infrastructure/data/project.py | tests/gis/test_runtime.py::test_offline_runtime_inventory_and_geopackage | Previous Push/PR CI JUnit | Network-disabled product E2E | IN_PROGRESS |
 | NFR-SEC-001 | — | Explicit provenance fields | src/lineament_core/infrastructure/data/provenance.py | tests/data/test_result_provenance.py::test_strict_provenance | Previous Push/PR CI JUnit | Full manifest/log secret scan | IN_PROGRESS |
 | NFR-SEC-002 | — | Reject unsupported manifests/sidecars | src/lineament_core/infrastructure/data/manifest.py; src/lineament_core/infrastructure/gis/raster.py | tests/data/test_project.py::test_unsupported_manifest_is_preserved | Previous Push/PR CI JUnit | Archive import validation | IN_PROGRESS |
+
+## TASK-AG01-10 authorized Phase 3 scope
+
+DEC-A35 selects Option A: PRE-001 P0, PRE-002 P1, PRE-003 P1 bundled. No FR ID or
+priority changed. ACR-004's PRE priority conflict is resolved; OQ-30 remains OPEN
+for remaining MVP/Balanced/OSM/release-minimum questions. Gaussian/Median remain
+unregistered candidates outside current implementation scope.
+
+Slope 1.0.0 contract and proposed test references are in
+[scope package](../docs/PHASE_3_SCOPE_DECISION_PACKAGE.md). Analytical plane tolerance
+<=1e-5 degrees is an authorized engineering fixture threshold, not full scientific
+acceptance. No new scientific tests or benchmarks have run in this documentation
+revision. PRE-003 remains NOT_STARTED in this preparation base; after actual Slope
+implementation it must be IN_PROGRESS until Curvature/TPI/LRM and their gates pass.
+PRE-002 remains NOT_STARTED. OQ-14, OQ-20 and OQ-31 remain OPEN.
+
+No exact integrated hardening baseline is available while LS-AUD-009 access remains
+blocked. PR #10 candidate e933c25 is not a substitute for its future merge SHA.
+No implementation is permitted from the old preparation base f7a52f7.

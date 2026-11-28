@@ -2,24 +2,27 @@
 
 ## 1. Executive Summary
 
-**PROPOSED — OWNER DECISION AND CHAT02 REVIEW REQUIRED.** Documentation only.
-This package reconciles scope choices; it changes no FR priority, OQ status, ADR,
-API, protocol, schema or dependency. Completing it does not authorize implementation.
+**OPTION A SELECTED — DOCUMENTATION UPDATE FOR CHAT02 REVIEW.**
+TASK-AG01-10 (2026-11-28) records delegated Owner authorization: DEC-A35 makes the
+FR catalogue authoritative, preserving PRE-001 P0, PRE-002 P1 and bundled PRE-003 P1.
+Gaussian/Median are excluded from current implementation scope pending separate
+registration. The earlier proposal was independently reviewed at d7d071c (PR #11,
+review 6095370708); that review does not accept this subsequent documentation delta.
 
-Preparation base: `f7a52f7dd5d96b89ccdd34bf1b820e66a3bd483a`, branch
-`integration/phase-2-3-baseline`. At inspection on 2026-11-28, PR #10 is OPEN/DRAFT,
-not merged; its inspected HEAD is `e933c2535c760320f1dbc169f0a8db83582f14d2`.
-The present branch is `feature/agent01-phase-03-scope-package`, created from that
-pre-hardening base. Hardening is a separately inspected prerequisite, not included
-in this branch. No new implementation baseline has been published by this package.
+Preparation base remains `f7a52f7dd5d96b89ccdd34bf1b820e66a3bd483a` on
+`integration/phase-2-3-baseline`. PR #10 remains OPEN/DRAFT, HEAD
+`e933c2535c760320f1dbc169f0a8db83582f14d2`. No integrated hardening merge SHA
+or `integration/phase-3-hardening-baseline` has been created. LS-AUD-009 detailed
+protection reads still return 403. Under Stage A authorization, only documentation
+continues; merge and Slope production implementation are blocked until governance
+is confirmed and the exact integrated baseline passes CI. No renewed Owner
+permission is required for the already authorized actions, but their gates remain.
 
-Owner must choose priority authority, register missing filter requirements, choose
-scientific definitions and approve numerical/performance criteria before a separate
-implementation task starts from a newly authorized integrated hardening SHA.
-Slope and weighted multidirectional Hillshade have relatively direct candidate
-contracts. Curvature and LRM need additional definition research; TPI, Gaussian and
-Median need neighborhood/mask/output decisions. **No new method is specification-
-ready for unrestricted implementation while its listed TBD decisions remain.**
+Current branch `feature/agent01-phase-03-scope-package` contains documentation only.
+Slope 1.0.0 is the first authorized future vertical slice, with frozen physical
+contract and analytic-plane tolerance below. Its registration/publication adaptation
+needs a CCR and architecture review before code. Other method cards remain candidates;
+no Curvature/TPI/LRM definition or Gaussian/Median implementation is approved here.
 
 ## 2. Current Implementation Audit
 
@@ -35,8 +38,8 @@ real coverage; they do not imply a fresh PASS or full normative acceptance.
 | PRE-003 Curvature | NOT_STARTED | NOT_STARTED | Same |
 | PRE-003 TPI | NOT_STARTED | NOT_STARTED | Same |
 | PRE-003 LRM | NOT_STARTED | NOT_STARTED | Same |
-| Gaussian smoothing, no FR ID | NOT_STARTED | NOT_STARTED | DEM specification P0 only; no implementation found |
-| Median filtering, no FR ID | NOT_STARTED | NOT_STARTED | DEM specification P1 only; no implementation found |
+| Gaussian smoothing, no FR ID | NOT_STARTED | NOT_STARTED | Previously DEM P0, now unregistered/out of current scope; no implementation found |
+| Median filtering, no FR ID | NOT_STARTED | NOT_STARTED | Previously DEM P1, now unregistered/out of current scope; no implementation found |
 
 This distinction corrects a potential baseline misunderstanding: **2.0.1 is present
 in PR #10, not in the permitted preparation base**. Future implementation must not
@@ -82,6 +85,11 @@ remain separate gates; none are closed here.
 
 ## 3. Requirements Conflict Matrix
 
+The table records the **pre-decision** discrepancy at d7d071c for audit history.
+DEC-A35 selects Option A and this revision aligns DEM Processing; former conflicts
+are not presented as still unresolved PRE priorities. Scientific definitions remain open.
+
+
 Sources: [FR catalogue](../01_REQUIREMENTS/FUNCTIONAL_REQUIREMENTS.md),
 [DEM Processing §3](../03_ALGORITHMS/DEM_PROCESSING.md),
 [Phase Breakdown](../11_DEVELOPMENT/PHASE_BREAKDOWN.md),
@@ -99,12 +107,15 @@ Sources: [FR catalogue](../01_REQUIREMENTS/FUNCTIONAL_REQUIREMENTS.md),
 | Median | No standalone FR ID or normative catalogue priority | DEM §3: Median filtering P1 | Same registration gap for v1.0 | Register explicitly or explicitly exclude from authorized implementation scope, without silently deleting DEM requirement |
 | Phase scope | Phase Breakdown: Hillshade, slope, curvature/TPI/LRM «по приоритетам» | Roadmap: DEM Preprocessing; MVP says preprocessing generically | Neither resolves method-level contradiction or defines Gaussian/Median acceptance | Owner selects authoritative crosswalk; preserve phase numbering 0–14 |
 
-OQ-30 and existing ACR-004 already record the PRE conflict. This is a decision
-package supplement, not a new approved resolution. Priorities and OQ statuses
-remain untouched. Missing FR IDs are not invented here; method aliases below are
+ACR-004 is resolved for this PRE conflict by DEC-A35. OQ-30 remains OPEN for
+other scope decisions. Existing FR priorities and OQ statuses remain untouched. Missing FR IDs are not invented here; method aliases below are
 planning labels only.
 
 ## 4. P0/P1 Scope Options
+
+**Option A selected by delegated Owner authorization.** Option B is retained only
+as an unselected historical alternative; it does not authorize priority changes.
+
 
 | Method | Option A — FR authority | Option B — DEM authority, requires formal reconciliation |
 |---|---|---|
@@ -115,19 +126,22 @@ planning labels only.
 | Gaussian | Unregistered; no assumed FR priority | Proposed P0 plus approved new FR registration |
 | Median | Unregistered; no assumed FR priority | Proposed P1 plus approved new FR registration |
 
-Option A preserves all catalogue priorities, but does not erase conflicting DEM
-requirements. Owner must approve later documentation alignment and disposition of
-unregistered methods. Option B requires a separate authorized catalogue change,
-traceability and acceptance review. Neither is selected by this document.
+Option A preserves all catalogue priorities. This authorized revision aligns DEM
+Processing and records the disposition of unregistered filters; the earlier conflict
+matrix is retained as history. Option B requires a separate authorized catalogue change,
+traceability and acceptance review. Option A is selected; Option B is not authorized.
 
 Optional scheduling proposal: a small vertical sequence of Slope, multidirectional
-and Gaussian after hardening integration. This is scheduling only, not a third
-priority system; selecting it does not complete PRE-003 or waive Curvature/TPI/LRM.
+and Gaussian after hardening integration. This older scheduling proposal is superseded: only Slope is authorized first;
+Gaussian is excluded. No partial sequence completes PRE-003 or waives Curvature/TPI/LRM.
 Owner must explicitly authorize each method and missing requirement registration.
 
 ## 5. Algorithm Technical Specifications
 
-All contracts below are **candidates**, not approved scientific definitions.
+Slope §5.3 is the authorized engineering contract. Other cards are **candidates**,
+not approved scientific definitions or implementation scope. Gaussian/Median remain
+unregistered and excluded. The Slope analytic-plane tolerance is the explicit exception
+to new tolerances remaining TBD.
 Every card inherits the common input/output, safety, provenance and acceptance
 requirements here. Method-specific deviations and unresolved choices are explicit.
 All new numerical tolerances, cutoff choices and acceptance performance thresholds
@@ -218,30 +232,63 @@ or a specifically cited GDAL/QGIS method and version before implementation.
   full benchmark sizes in §10; approved thresholds TBD OQ-14/OQ-31.
 - Dependencies: common existing stack; no full GDAL Python binding required by this proposal.
 
-### 5.3 Slope — PRE-003
+### 5.3 Slope — PRE-003 contribution, authorized v1.0.0
 
-Purpose: local inclination in degrees, not illumination. Candidate Horn pixel
-partials p,q transformed to physical world gradient `g=A^(-T)*(p,q)` with consistent
-horizontal/vertical units. `slope=degrees(atan(hypot(gx,gy)))`.
-Band offset cancels before differencing. Reuse the mathematical kernel only after
-independent gradient tests, not a second GIS reader or publication system.
+Purpose: physical local inclination, no artificial vertical exaggeration.
+Rasterio Affine(a,b,c,d,e,f) maps pixel increments `(column,row)` to CRS `(x,y)`
+using `A=[[a,b],[d,e]]`. For Horn 3×3 raw partials `p_raw,q_raw`, positive band
+scale s, vertical metres/unit v and horizontal metres/unit h:
 
-- Inputs/CRS/units: common derivative contract; anisotropic and rotated/skewed grids.
-- Parameters/defaults: selected band, explicit vertical units/factor, edge/mask policy,
-  tile/budget; propose no exaggeration by default. If z-factor exposed, default 1 is
-  a proposed neutral factor and must be visibly distinguished from physical unit conversion.
-- Bounds: positive finite unit factor; finite nonsingular transform; reject unsupported
-  geographic CRS and nonfinite parameters. Do not clip numerical failures into plausible slopes.
-- NoData/edge/output: full-stencil policy; degrees [0,90), float32 candidate, NoData -1.
-- Tiles/halo/memory: one-cell halo; bounded float64 gradient buffers then output conversion.
-- Version/provenance: proposed ID `slope`, initial version TBD; Horn method, degree units,
-  physical/exaggeration semantics and all common fields.
-- Analytical fixtures: flat→0; world plane `z=ax+by+c`→atan(hypot(a,b)) in degrees;
-  orientations, metre/foot, rotated/skewed affine and scale/offset equivalents.
-- Numerical acceptance: compare to analytic slope and scalar Horn oracle separately;
-  finite-difference discretization error is distinct from floating error. Tolerance TBD OQ-20.
-- Performance acceptance: same-grid tile/full output comparison and §10 benchmarks,
-  thresholds TBD. Dependencies: existing NumPy/Rasterio only.
+```text
+p_m = p_raw * s * v
+q_m = q_raw * s * v
+A_m = h * A
+g = inverse(transpose(A_m)) @ [p_m,q_m]
+slope_deg = atan(hypot(gx,gy)) * 180/pi
+```
+
+Constant band offset cancels before differencing; retain original offset/scale in
+provenance. Horizontal and vertical conversion are separate. Validate finite
+positive scales/conversions, known compatible units and projected CRS; reject
+missing/unknown/geographic CRS and singular/nonfinite affine. No implicit reprojection
+or CRS assignment. Affine rotation/skew and anisotropic pixels are required cases.
+No z-factor/exaggeration parameter for Slope v1.0.0.
+
+Inputs: verified selected DEM band, strict common preflight/snapshot profile.
+Algorithm ID `slope`, version `1.0.0`, method Horn 3×3, output degrees. Single-band
+float32 GeoTIFF, NoData -1 with **internal validity mask**; grid/CRS exactly retained.
+Any masked/nonfinite/NoData cell or outside-raster cell invalidates the full stencil.
+Small rasters may produce no valid interior; report this explicitly, never invent slopes.
+
+Initial tile 1024×1024, halo one pixel, CPU-only and bounded memory; budget 6 GB is
+a starting Worker profile, not proven memory use. Admission includes native blocks,
+intermediates, output mask and GDAL cache. Check cancellation between bounded IO,
+preflight and tiles and immediately before publication; isolate callback exceptions.
+
+Strict provenance includes source asset/version/checksum, band, algorithm/version,
+Horn method, scale/offset, vertical and horizontal conversions, CRS/affine/output
+grid, dtype/NoData/mask policy, parameters, output checksum, dependencies and UTC.
+Publish only through existing Project Storage; propose CCR for method dispatch and
+provenance adaptation, obtain architecture review before changing implementation.
+No Manifest 1.1/SQLite 2 or public Wire change is authorized by this contract.
+
+Analytical fixtures: flat zero, world planes in multiple directions, rotated/skewed
+and anisotropic affine, metre/foot units, calibrated integer versus equivalent float,
+large constant offsets, mask/NaN/Inf/borders/small rasters/partial tiles. **Maximum
+absolute plane error <=1e-5 degrees**; no relative error criterion near zero.
+This is the authorized float32 analytical fixture tolerance, not full scientific
+acceptance; OQ-20/OQ-31 remain OPEN. Independent scalar Horn and analytic oracles
+must distinguish finite-difference error from floating error.
+
+Require tile/full equivalence, cancellation/callback regressions, import → processing
+→ publication → fresh-process reopen and unchanged input digest. Benchmarks 1k/5k/10k/
+20k squared must measure runtime, peak RSS, temporary disk and cancellation. Results
+are **NOT RUN**; performance thresholds remain subject to evidence/OQ-14. Dependencies:
+existing Python 3.11/NumPy 2.4.6/Rasterio 1.4.4 only, no SciPy/OpenCV/Qt.
+
+For future curvature review, the same physical convention gives
+`H_world=A_m^(-T) @ (s*v*H_raw) @ A_m^(-1)` when H_raw is the pixel Hessian.
+This clarifies units/axes without selecting or authorizing a curvature estimator.
 
 ### 5.4 Curvature — PRE-003
 
@@ -478,7 +525,7 @@ or analytic oracle and a frozen fixture manifest, never a self-comparison alone.
 | Method / future reference | Given | When | Then / blocker |
 |---|---|---|---|
 | M: `tests/science/test_multidirectional.py::test_weighted_plane_oracle` | Plane with known physical gradient, explicit directions/unequal weights | Evaluate approved illumination combination | Matches weighted scalar light-normal dots; one direction equals H; zero-weight list rejected; tolerance TBD OQ-20 |
-| S: `tests/science/test_slope.py::test_world_plane_oracle` | z=ax+by+c, transformed/anisotropic grid, known units | Apply Horn/world gradient | Degrees equal atan(hypot(a,b)); flat zero; offset changes do not change slope; tolerance TBD |
+| S: `tests/science/test_slope.py::test_world_plane_oracle` | z=ax+by+c, transformed/anisotropic grid, known units | Apply Horn/world gradient | Degrees equal atan(hypot(a,b)); flat zero; offset changes do not change slope; max absolute plane error <=1e-5 degrees |
 | C: `tests/science/test_curvature.py::test_quadratic_hessian_oracle` | World quadratic with known Hessian, approved curvature definition | Compute chosen estimator | Matches Hessian and chosen sign/units/formula; singular/flat profile special cases explicit; definition/tolerance TBD |
 | T: `tests/science/test_tpi.py::test_discrete_neighborhood_oracle` | Explicit footprint and enumerated valid neighbors | Compute approved raw/standardized TPI | Center-minus-mean or approved standardization matches oracle; zero variance/support rule enforced; tolerance TBD |
 | L: `tests/science/test_lrm.py::test_background_residual_oracle` | Known discrete background B and sinusoidal/feature DEM | Compute centered residual | z-B(z) matches independent B oracle and units; no invented detrending; definition/tolerance TBD |
@@ -489,7 +536,8 @@ All seven also need `test_tile_equivalence`, `test_invalid_inputs` and
 `test_large_offset` in their corresponding proposed science module. Test acceptance
 requires method-specific max absolute, mean absolute and relative errors, with a
 chosen near-zero rule so relative error is not divided by zero. Definitions,
-thresholds and representative terrain corpus remain subject to OQ-20/OQ-31.
+thresholds and representative terrain corpus remain subject to OQ-20/OQ-31,
+except the authorized Slope analytical-plane threshold <=1e-5 degrees.
 Existing PRE-001 test tolerances are historical evidence only; they are not defaults
 for slope degrees, curvature inverse-length or elevation filters.
 
@@ -539,7 +587,7 @@ all methods into one large commit.
 
 | Stage | Scope / IDs | Proposed modules and tests | Exit artifacts / acceptance | Risk and Owner prerequisite |
 |---|---|---|---|---|
-| 0 | Scope reconciliation; PRE-001/002/003, unregistered filters | This package; no production code | Selected A/B, registered missing requirements or explicit scope disposition, approved GWT/tolerances | OQ-30/20/31 decisions; no implicit FR closure |
+| 0 | Scope reconciliation; PRE-001/002/003, unregistered filters | This package; no production code | Option A selected, PRE-003 bundled, Gaussian/Median excluded, Slope engineering contract fixed; fresh documentation review pending | Remaining OQ-30/20/31 gates; no implicit FR closure |
 | 1 | Integrated hardening baseline and method contracts; NFR-REL-002, NFR-REPRO-001 | Existing storage/registry/provenance; historical/cancel suites | Exact Owner-published merged SHA, Windows/Linux CI, reviewed adapter/CCR proposal | PR #10 integration/governance pending; no algorithms on f7a52f7 |
 | 2 | Slope first vertical slice if selected; PRE-003 contribution | science/slope candidate, existing GIS/storage validation, six test layers §7 | Real TIFF publication, fresh-process reopen, analytic errors, performance evidence | Units/exaggeration/output tolerance decisions; PRE-003 not fully satisfied |
 | 3 | Multidirectional vertical slice; PRE-002 | science/multidirectional candidate, registry/provenance dispatch; all layers | Versioned method, weighted oracle, publication/recovery and Windows evidence | Chosen method must distinguish GDAL formula from proposed weighted mean |
@@ -614,7 +662,7 @@ migration/rollback or generic orphan cleaner is implied by preprocessing expansi
 |---|---|
 | OQ-14 OPEN | Kernel/tile/halo policy and measured memory/performance, not a universal tile default |
 | OQ-20 OPEN | Per-method numerical tolerances, supported ranges, near-zero relative-error policy, independent oracle approval |
-| OQ-30 OPEN / ACR-004 | A/B priority authority, PRE-003 decomposition decision, explicit registration/disposition of Gaussian/Median |
+| OQ-30 OPEN / ACR-004 | Option A selected, PRE-003 bundled; Gaussian/Median excluded pending registration; broader OQ-30 remains OPEN |
 | OQ-31 OPEN | Representative terrain corpus, held-out sites, method/cross-engine comparison, scientific acceptance responsibility |
 | OQ-25/26/27 | Storage/provenance ownership and compatibility for new result types; no unilateral schema decision |
 | OQ-28 | Windows native runtime, bundle, licensing and coexistence evidence |
@@ -627,21 +675,21 @@ context, including separate hardening limitations.
 
 ## 13. Owner Decision Checklist
 
-- [ ] Select Option A or B; explicitly authorize later source-document reconciliation.
-- [ ] Decide whether PRE-003 stays bundled or is atomized by a separate approved change.
-- [ ] Register or explicitly disposition Gaussian/Median requirements; assign priorities
-      only through Owner approval, not this planning alias list.
-- [ ] Choose first implementation methods and their order; confirm remaining methods
-      are still required where their normative scope remains.
+- [x] Option A selected by TASK-AG01-10; source-document PRE priorities aligned.
+- [x] PRE-003 stays bundled; one Slope slice cannot close it.
+- [x] Gaussian/Median excluded from current implementation scope; registration remains separate.
+- [x] Slope is the first authorized vertical slice after integration gates; other
+      normative methods remain pending and Gaussian/Median excluded.
 - [ ] Select multidirectional formula/version, direction set and weights; confirm defaults.
-- [ ] Approve slope physical units and whether explicit exaggeration is allowed.
+- [x] Slope physical unit contract approved; no exaggeration; plane tolerance <=1e-5 degrees.
 - [ ] Select curvature type, estimator, sign/units and zero-gradient behavior.
 - [ ] Select TPI footprint, physical radius, center inclusion, normalization/support.
 - [ ] Select LRM background estimator and clarify overlap with TPI.
 - [ ] Select Gaussian/Median pixel or metric scope, kernel/footprint, edge/mask/center
       rules, parameter defaults, output dtype and NoData representation.
 - [ ] Approve method-specific OQ-20 error bounds, numeric-range diagnostics and OQ-31
-      terrain/cross-engine corpus; all new tolerances currently TBD.
+      terrain/cross-engine corpus; new tolerances remain TBD except the authorized
+      Slope analytic-plane engineering tolerance <=1e-5 degrees.
 - [ ] Approve performance benchmarks/thresholds and OQ-14 admission policy.
 - [ ] Review whether application/provenance extension requires CCR/ADR; preserve
       existing public Core/Wire and Manifest 1.1 / SQLite 2 absent separate approval.
@@ -693,3 +741,14 @@ of a selected external standard. Before implementation, chosen variants must rec
 reviewed method citations/version-specific GDAL/QGIS comparison where relevant and
 Owner-approved criteria under OQ-20/OQ-31. No external benchmark or citation review
 has been represented as completed in this documentation task.
+
+### TASK-AG01-10 execution state
+
+Stage A: LS-AUD-009 remains PARTIALLY VERIFIED / unresolved; both detailed protection
+GET requests return 403. No administrative configuration changed. Stage B merge,
+post-merge CI and publication of `integration/phase-3-hardening-baseline` are BLOCKED.
+There is no honest exact integrated SHA/link to insert yet; PR #10 e933c25 is only
+the candidate. Stage C documentation decision delta is submitted for a fresh CHAT02
+review; prior d7d071c review does not cover this delta. Stages D/E Slope code, tests,
+benchmarks and platform evidence are NOT STARTED. No Slope PR or fictitious benchmark
+result is created. Resume from the exact verified integrated hardening commit only.
