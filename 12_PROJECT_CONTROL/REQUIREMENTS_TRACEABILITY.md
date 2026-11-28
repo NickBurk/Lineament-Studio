@@ -136,8 +136,9 @@ references are repository-root-relative paths; test evidence is listed separatel
 actual repository files; parametrized tests include all collected cases. Historical
 execution evidence: [Push CI 46027699055](https://github.com/NickBurk/Lineament-Studio/actions/runs/46027699055)
 and [PR CI 46027707459](https://github.com/NickBurk/Lineament-Studio/actions/runs/46027707459),
-each with Ubuntu/Windows JUnit artifacts for HEAD `23599407`. New corrective HEAD
-requires fresh CI before its evidence can be claimed. The CI run does not establish
+each with Ubuntu/Windows JUnit artifacts for HEAD `23599407`. Corrective HEAD
+`6bd83fa18dc11c30abc4b5f344ff0c6de04383f9` passed exact-head Ubuntu/Windows
+PR and Push CI; see the hardening evidence below. The CI run does not establish
 Windows standalone GIS bundle compatibility or product acceptance.
 
 | Requirement ID | Normative priority | Implemented scope | Implementation reference | Exact test ID or command | Evidence reference | Remaining scope | Status |
@@ -180,7 +181,7 @@ Windows standalone GIS bundle compatibility or product acceptance.
 - NFR-REPRO-001: `src/lineament_core/infrastructure/data/provenance.py` historical allowlist;
   `tests/data/test_result_provenance.py::test_real_historical_project_survives_executable_upgrade`.
 - NFR-REL-002: internal cancellation and observers in
-  `src/lineament_core/infrastructure/execution.py` and `infrastructure/data/project.py`;
+  `src/lineament_core/infrastructure/execution.py` and `src/lineament_core/infrastructure/data/project.py`;
   `tests/data/test_result_provenance.py::test_cancellation_publication_boundary`,
   `test_callback_failure_does_not_change_publication`; production Worker remains future scope.
 - NFR-REPRO-002 / PRE-001: `src/lineament_core/science/hillshade.py` offset-free derivatives;
@@ -188,3 +189,36 @@ Windows standalone GIS bundle compatibility or product acceptance.
 
 Exact-head CI evidence is attached to the hardening PR. These contributions do not
 promote any full normative requirement to VERIFIED or authorize new algorithms.
+
+### Independently accepted storage adapter hardening
+
+CHAT02 acceptance at `6bd83fa18dc11c30abc4b5f344ff0c6de04383f9` is recorded
+from CHAT01's TASK-AG01-09-DOC-01. LS-AUD-004 covers cooperative cancellation
+and the publication boundary within the storage adapter; production Worker remains
+a separate gate. LS-AUD-011 covers staging cleanup after confirmed rollback and
+retention after successful commit or uncertain outcome. Implementation:
+[src/lineament_core/infrastructure/data/project.py](../src/lineament_core/infrastructure/data/project.py).
+
+All six regression tests are in
+[tests/data/test_result_provenance.py](../tests/data/test_result_provenance.py):
+
+- `test_cancellation_publication_boundary`
+- `test_sqlite_failure_confirmed_rollback_cleans_stage`
+- `test_repeated_prepared_cancellation_leaves_no_stages`
+- `test_committed_intent_retains_stage_until_recovery`
+- `test_unknown_commit_outcome_retains_stage`
+- `test_cleanup_failure_preserves_cancellation`
+
+Exact-head evidence for `6bd83fa`:
+
+| Trigger | Ubuntu | Windows |
+|---|---|---|
+| [PR CI](https://github.com/NickBurk/Lineament-Studio/actions/runs/46060962293) | PASS; [JUnit](https://github.com/NickBurk/Lineament-Studio/actions/runs/46060962293/artifacts/15228094149) | PASS; [JUnit](https://github.com/NickBurk/Lineament-Studio/actions/runs/46060962293/artifacts/15229041869) |
+| [Push CI](https://github.com/NickBurk/Lineament-Studio/actions/runs/46060955062) | PASS; [JUnit](https://github.com/NickBurk/Lineament-Studio/actions/runs/46060955062/artifacts/15228751645) | PASS; [JUnit](https://github.com/NickBurk/Lineament-Studio/actions/runs/46060955062/artifacts/15228537177) |
+
+Per platform: **194 passed**, Data **82**, Science **34**, GIS **12**, Integration
+**1**. Zero failures, errors, skips and xfails. These counts include targeted reruns;
+they are not added to the full-suite count. Supported development profile only;
+product requirement statuses are unchanged. LS-AUD-006–008 remain OPEN and
+LS-AUD-009 remains NOT VERIFIED. No product security/release gate is closed.
+These CI results belong to `6bd83fa`, not automatically to later documentation commits.

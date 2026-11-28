@@ -6,16 +6,45 @@ are development evidence only. No product gate or ADR/OQ status is changed here.
 
 | Finding | Owner | Stage | Checkpoint | Current evidence/status |
 |---|---|---|---|---|
-| LS-AUD-001 | Agent01 | Hardening | Before baseline extension | pytest 9.0.3, Python >=3.11,<3.12; lock updated; CI required |
-| LS-AUD-002 | Agent01 | Hardening | Before algorithms | Explicit historical allowlist 2.0.0/2.0.1; real previous-baseline project fixture; review required |
-| LS-AUD-003 | Agent01 | Hardening | Before algorithms | Offset-free gradient, independent plane oracle; review required |
-| LS-AUD-004 | Agent01 | Hardening | Before Worker integration | Cooperative copy/digest/preflight, last gate before SQLite commit; review required |
-| LS-AUD-005 | Agent01 | Hardening | Before publication extension | Fixed callback diagnostic, actual result ID returned; regression tests |
-| LS-AUD-006 | Agent01 | Storage security | Product storage acceptance | Planned, no automatic deletion |
-| LS-AUD-007 | Agent01 | Security | Untrusted-project acceptance | Planned |
-| LS-AUD-008 | Agent01 | Release security | Windows Bundle release | Planned |
-| LS-AUD-009 | Agent01/Owner | Governance | Main consolidation | Configuration changes require Owner permission |
-| LS-AUD-010 | Agent01 | Documentation | This PR | README reflects restricted acceptance |
+| LS-AUD-001 | Agent01 | Hardening | Before baseline extension | pytest 9.0.3, Python >=3.11,<3.12; lock updated; RESOLVED, CHAT02 acceptance |
+| LS-AUD-002 | Agent01 | Hardening | Before algorithms | Explicit historical allowlist 2.0.0/2.0.1; real previous-baseline project fixture; RESOLVED, CHAT02 acceptance |
+| LS-AUD-003 | Agent01 | Hardening | Before algorithms | Offset-free gradient, independent plane oracle; RESOLVED, CHAT02 acceptance |
+| LS-AUD-004 | Agent01 | Hardening | Before Worker integration | RESOLVED within storage adapter, CHAT02 acceptance at `6bd83fa`; production Worker is a separate gate |
+| LS-AUD-005 | Agent01 | Hardening | Before publication extension | Fixed callback diagnostic, actual result ID returned; RESOLVED, CHAT02 acceptance |
+| LS-AUD-006 | Agent01 | Storage security | Product storage acceptance | OPEN, no automatic deletion |
+| LS-AUD-007 | Agent01 | Security | Untrusted-project acceptance | OPEN |
+| LS-AUD-008 | Agent01 | Release security | Windows Bundle release | OPEN |
+| LS-AUD-009 | Agent01/Owner | Governance | Main consolidation | NOT VERIFIED; configuration changes require Owner permission |
+| LS-AUD-010 | Agent01 | Documentation | This PR | RESOLVED; README reflects restricted acceptance |
+| LS-AUD-011 | Agent01 | Hardening, P2 | Confirmed PREPARED rollback | RESOLVED; `project.py`, CHAT02 independent acceptance at `6bd83fa`; see section below |
+
+## LS-AUD-011 — confirmed rollback staging cleanup
+
+Status: **RESOLVED**. Severity: **P2**. CHAT02 independently accepted the
+correction at HEAD `6bd83fa18dc11c30abc4b5f344ff0c6de04383f9` (acceptance
+reported by CHAT01 in TASK-AG01-09-DOC-01).
+Implementation: [project.py](../../src/lineament_core/infrastructure/data/project.py).
+
+Internal transaction outcomes are NOT_STARTED, ATTEMPTED, ROLLED_BACK, COMMITTED
+and UNKNOWN. Before a transaction attempt, operation-owned staging can be cleaned.
+After an attempt, cleanup requires confirmed rollback: no active transaction and
+a successful query proving the operation's pending intent absent. Successful commit
+and uncertain outcomes retain staging for reopen/recovery. Cleanup exceptions emit
+fixed diagnostics and preserve the original exception. This targeted fix does not
+implement generic orphan cleanup or close LS-AUD-006.
+
+Regression evidence in [test_result_provenance.py](../../tests/data/test_result_provenance.py):
+
+- `test_cancellation_publication_boundary`
+- `test_sqlite_failure_confirmed_rollback_cleans_stage`
+- `test_repeated_prepared_cancellation_leaves_no_stages`
+- `test_committed_intent_retains_stage_until_recovery`
+- `test_unknown_commit_outcome_retains_stage`
+- `test_cleanup_failure_preserves_cancellation`
+
+LS-AUD-004 cooperative cancellation and publication boundary are accepted by CHAT02
+within the storage adapter at the same HEAD. Production Worker terminal status and
+integration remain a separate gate. Physical power-loss durability is NOT VERIFIED.
 
 ## Historical and numerical contract
 
